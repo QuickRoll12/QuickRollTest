@@ -66,6 +66,7 @@ const AdminChatbotContent = () => {
       setError(null);
       
       const response = await axios.get('/api/chatbot/admin/documents');
+      console.log('Documents response:', response.data);
       setDocuments(response.data.documents || []);
     } catch (err) {
       console.error('Failed to fetch documents:', err);
@@ -90,7 +91,7 @@ const AdminChatbotContent = () => {
     formData.append('category', selectedCategory);
 
     try {
-      await axios.post('/api/chatbot/admin/documents/upload', formData, {
+      const response = await axios.post('/api/chatbot/admin/documents/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -101,7 +102,8 @@ const AdminChatbotContent = () => {
           setUploadProgress(percentCompleted);
         },
       });
-
+      
+      console.log('Upload response:', response.data);
       fetchDocuments();
     } catch (err) {
       console.error('Upload failed:', err);
@@ -122,7 +124,6 @@ const AdminChatbotContent = () => {
     setError(null);
 
     try {
-      // Simulate progress for better UX
       const interval = setInterval(() => {
         setUploadProgress((prev) => {
           if (prev >= 90) {
@@ -133,20 +134,20 @@ const AdminChatbotContent = () => {
         });
       }, 200);
 
-      await axios.post('/api/chatbot/admin/documents/text', {
+      const response = await axios.post('/api/chatbot/admin/documents/text', {
         title: directTitle,
         content: directInput,
         category: selectedCategory,
       });
 
+      console.log('Text submission response:', response.data);
+      
       clearInterval(interval);
       setUploadProgress(100);
       
-      // Reset form
       setDirectInput('');
       setDirectTitle('');
       
-      // Refresh document list
       fetchDocuments();
     } catch (err) {
       console.error('Text submission failed:', err);
@@ -163,7 +164,8 @@ const AdminChatbotContent = () => {
 
     try {
       setError(null);
-      await axios.delete(`/api/chatbot/admin/documents/${documentId}`);
+      const response = await axios.delete(`/api/chatbot/admin/documents/${documentId}`);
+      console.log('Delete response:', response.data);
       fetchDocuments();
     } catch (err) {
       console.error('Delete failed:', err);

@@ -9,9 +9,12 @@ const fs = require('fs');
 // Set up multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    // Use an absolute path to ensure the directory is created in the right place
     const uploadDir = path.join(__dirname, '../../uploads/chatbot');
+    console.log('Upload directory:', uploadDir);
     // Create directory if it doesn't exist
     if (!fs.existsSync(uploadDir)) {
+      console.log('Creating upload directory:', uploadDir);
       fs.mkdirSync(uploadDir, { recursive: true });
     }
     cb(null, uploadDir);
@@ -19,7 +22,9 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    const filename = file.fieldname + '-' + uniqueSuffix + ext;
+    console.log('Generated filename:', filename);
+    cb(null, filename);
   }
 });
 
@@ -99,45 +104,67 @@ adminRouter.get('/documents', async (req, res) => {
 // Upload document files
 adminRouter.post('/documents/upload', upload.array('documents', 5), async (req, res) => {
   try {
+    console.log('Upload request received:', req.body);
+    console.log('Files received:', req.files ? req.files.length : 0);
+    
     const { category } = req.body;
     
     if (!category) {
+      console.log('Error: Category is missing');
       return res.status(400).json({ error: 'Category is required' });
     }
     
     if (!req.files || req.files.length === 0) {
+      console.log('Error: No files uploaded');
       return res.status(400).json({ error: 'No files uploaded' });
     }
     
+    console.log('Processing', req.files.length, 'files for category:', category);
     const results = [];
     
     for (const file of req.files) {
+      console.log('Processing file:', file.originalname, 'size:', file.size, 'bytes');
       const result = await chatbotService.processFileDocument(file, category);
       results.push(result);
     }
     
+    console.log('Upload completed successfully');
     return res.json({ success: true, results });
   } catch (error) {
     console.error('Failed to upload documents:', error);
-    return res.status(500).json({ error: 'Failed to upload documents' });
+    return res.status(500).json({ 
+      error: 'Failed to upload documents', 
+      details: error.message 
+    });
   }
 });
 
 // Add text content
 adminRouter.post('/documents/text', async (req, res) => {
   try {
+    console.log('Text content submission received:', req.body);
     const { title, content, category } = req.body;
     
     if (!title || !content || !category) {
+      console.log('Error: Missing required fields:', { 
+        hasTitle: !!title, 
+        hasContent: !!content, 
+        hasCategory: !!category 
+      });
       return res.status(400).json({ error: 'Title, content, and category are required' });
     }
     
+    console.log(`Processing text content: "${title}" in category: ${category}, content length: ${content.length}`);
     const result = await chatbotService.processTextDocument(title, content, category);
     
+    console.log('Text content added successfully:', result);
     return res.json({ success: true, result });
   } catch (error) {
     console.error('Failed to add text content:', error);
-    return res.status(500).json({ error: 'Failed to add text content' });
+    return res.status(500).json({ 
+      error: 'Failed to add text content', 
+      details: error.message 
+    });
   }
 });
 
