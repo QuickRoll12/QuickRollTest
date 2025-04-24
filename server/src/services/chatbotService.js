@@ -1,5 +1,5 @@
 const axios = require('axios');
-const ChatLog = require('../models/Chatlog');
+const ChatLog = require('../models/ChatLog');
 const ChatbotDocument = require('../models/ChatbotDocument');
 const fs = require('fs');
 const path = require('path');

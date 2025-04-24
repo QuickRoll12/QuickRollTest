@@ -28,4 +28,4 @@ const chatLogSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('Chatlog', chatLogSchema);
+module.exports = mongoose.model('ChatLog', chatLogSchema);
