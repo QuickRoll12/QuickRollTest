@@ -1,16 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, TextField, Paper, Grid, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, TextField, Paper, Grid, CircularProgress, Chip, IconButton } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 
+// Hidden file input component
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
+
+// Progress bar component
+const ProgressContainer = styled(Box)(({ theme }) => ({
+  width: '100%',
+  height: 8,
+  backgroundColor: theme.palette.grey[200],
+  borderRadius: 4,
+  marginTop: theme.spacing(2),
+  marginBottom: theme.spacing(1),
+  position: 'relative',
+}));
+
+const ProgressBar = styled(Box)(({ width }) => ({
+  height: '100%',
+  width: `${width}%`,
+  backgroundColor: '#1976d2',
+  borderRadius: 4,
+  transition: 'width 0.3s ease',
+}));
+
 const AdminChatbotContent = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('general');
   const [directInput, setDirectInput] = useState('');
   const [directTitle, setDirectTitle] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const categories = [
     { id: 'general', name: 'General Information' },
@@ -22,12 +57,123 @@ const AdminChatbotContent = () => {
   ];
 
   useEffect(() => {
-    // Simplified loading state for initial debugging
-    setLoading(false);
+    fetchDocuments();
   }, []);
 
-  const handleDirectInputSubmit = () => {
-    alert('This feature will be available soon!');
+  const fetchDocuments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await axios.get('/api/chatbot/admin/documents');
+      setDocuments(response.data.documents || []);
+    } catch (err) {
+      console.error('Failed to fetch documents:', err);
+      setError('Failed to load documents. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (event) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setError(null);
+
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append('documents', files[i]);
+    }
+    formData.append('category', selectedCategory);
+
+    try {
+      await axios.post('/api/chatbot/admin/documents/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          setUploadProgress(percentCompleted);
+        },
+      });
+
+      fetchDocuments();
+    } catch (err) {
+      console.error('Upload failed:', err);
+      setError(`Failed to upload document: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDirectInputSubmit = async () => {
+    if (!directInput.trim() || !directTitle.trim()) {
+      setError('Title and content are required');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setError(null);
+
+    try {
+      // Simulate progress for better UX
+      const interval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(interval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
+      await axios.post('/api/chatbot/admin/documents/text', {
+        title: directTitle,
+        content: directInput,
+        category: selectedCategory,
+      });
+
+      clearInterval(interval);
+      setUploadProgress(100);
+      
+      // Reset form
+      setDirectInput('');
+      setDirectTitle('');
+      
+      // Refresh document list
+      fetchDocuments();
+    } catch (err) {
+      console.error('Text submission failed:', err);
+      setError(`Failed to submit text content: ${err.response?.data?.error || err.message}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeleteDocument = async (documentId) => {
+    if (!window.confirm('Are you sure you want to delete this document?')) {
+      return;
+    }
+
+    try {
+      setError(null);
+      await axios.delete(`/api/chatbot/admin/documents/${documentId}`);
+      fetchDocuments();
+    } catch (err) {
+      console.error('Delete failed:', err);
+      setError(`Failed to delete document: ${err.response?.data?.error || err.message}`);
+    }
+  };
+
+  const getCategoryName = (categoryId) => {
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category ? category.name : categoryId;
   };
 
   return (
@@ -83,16 +229,28 @@ const AdminChatbotContent = () => {
               component="label"
               variant="contained"
               startIcon={<CloudUploadIcon />}
+              disabled={isUploading}
               fullWidth
             >
-              Select Files
-              <input
+              {isUploading ? 'Uploading...' : 'Select Files'}
+              <VisuallyHiddenInput
                 type="file"
-                hidden
                 multiple
                 accept=".pdf,.docx,.txt"
+                onChange={handleFileUpload}
               />
             </Button>
+
+            {isUploading && (
+              <Box sx={{ mt: 2 }}>
+                <ProgressContainer>
+                  <ProgressBar width={uploadProgress} />
+                </ProgressContainer>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="body2">{uploadProgress}%</Typography>
+                </Box>
+              </Box>
+            )}
           </Paper>
         </Grid>
 
@@ -160,6 +318,7 @@ const AdminChatbotContent = () => {
             <Button
               variant="contained"
               onClick={handleDirectInputSubmit}
+              disabled={isUploading || !directInput.trim() || !directTitle.trim()}
               fullWidth
             >
               Submit Content
@@ -186,10 +345,49 @@ const AdminChatbotContent = () => {
         ) : (
           <Box>
             {documents.map((doc) => (
-              <Paper key={doc._id} sx={{ p: 2, mb: 2, display: 'flex', justifyContent: 'space-between' }}>
+              <Paper 
+                key={doc._id || `doc-${Math.random()}`} 
+                sx={{ 
+                  p: 2, 
+                  mb: 2, 
+                  display: 'flex', 
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  '&:hover': {
+                    boxShadow: 3,
+                  },
+                }}
+              >
                 <Box>
                   <Typography variant="subtitle1">{doc.title || doc.filename}</Typography>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+                    <Chip
+                      label={getCategoryName(doc.category)}
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
+                    <Chip
+                      label={doc.type || 'Text'}
+                      size="small"
+                      variant="outlined"
+                    />
+                    {doc.createdAt && (
+                      <Chip
+                        label={new Date(doc.createdAt).toLocaleDateString()}
+                        size="small"
+                        variant="outlined"
+                      />
+                    )}
+                  </Box>
                 </Box>
+                <IconButton
+                  color="error"
+                  onClick={() => handleDeleteDocument(doc._id)}
+                  size="small"
+                >
+                  <DeleteIcon />
+                </IconButton>
               </Paper>
             ))}
           </Box>
