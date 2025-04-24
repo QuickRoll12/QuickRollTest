@@ -24,6 +24,9 @@ import AdminSuspiciousDevices from './pages/AdminSuspiciousDevices';
 import FacultyPastAttendance from './pages/FacultyPastAttendance';
 import Footer from './components/Footer';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import ChatPage from './pages/ChatPage';
+import AdminChatbotContent from './pages/AdminChatbotContent';
+import Chatbot from './components/Chatbot';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -189,10 +192,13 @@ function App() {
                     </ProtectedRoute>
                   } 
                 />
+                <Route path="/chat" element={<ChatPage />} />
+                <Route path="/admin/chatbot-content" element={<AdminChatbotContent />} />
               </Routes>
             </div>
           )}
           <Footer />
+          <Chatbot />
         </div>
       </Router>
     </AuthProvider>

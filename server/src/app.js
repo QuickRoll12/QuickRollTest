@@ -15,6 +15,7 @@ const facultyRoutes = require('./routes/facultyRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const sheetMappingRoutes = require('./routes/sheetMappingRoutes');
 const attendanceRecordRoutes = require('./routes/attendanceRecordRoutes');
+const chatbotRoutes = require('./routes/chatbotRoutes');
 const path = require('path');
 
 const app = express();
@@ -88,7 +89,7 @@ app.use('/api', facultyRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/sheet-mappings', sheetMappingRoutes);
 app.use('/api/attendance', attendanceRecordRoutes);
-
+app.use('/api/chatbot', chatbotRoutes);
 
 // MongoDB connection with proper options
 mongoose.connect(process.env.MONGODB_URI, {
