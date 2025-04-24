@@ -1,0 +1,464 @@
+.student-dashboard {
+    background-color: #f0f4f8; /* Light background for contrast */
+    border-radius: 12px; /* Rounded corners */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+    padding: 20px; /* Add padding for spacing */
+    font-family: 'Arial', sans-serif; /* Modern font */
+}
+
+h1 {
+    color: #333; /* Darker color for the title */
+    margin-bottom: 20px; /* Space below the title */
+}
+
+.attendance-grid {
+    display: grid; /* Use grid layout */
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Responsive columns */
+    gap: 15px; /* Space between grid items */
+    margin-top: 20px; /* Space above the grid */
+}
+
+.grid-cell {
+    padding: 20px; /* Add padding for cells */
+    text-align: center; /* Center text */
+    border-radius: 8px; /* Rounded corners for cells */
+    background-color: #ff6f61; /* Soft red color for unused */
+    color: white; /* White text */
+    transition: transform 0.2s, background-color 0.3s; /* Smooth scaling and color transition */
+}
+
+.grid-cell.used {
+    background-color: #4caf50; /* Green for used */
+}
+
+.grid-cell.unused {
+    background-color: #ff6f61; /* Soft red for unused */
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.title {
+    font-size: 32px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 30px;
+    color: #1a237e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 15px 0;
+    border-bottom: 3px solid #3f51b5;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.subtitle {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #283593;
+}
+
+.control-panel {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.session-info {
+    text-align: center;
+    margin-bottom: 20px;
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.session-status {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.session-status.active {
+    color: #4caf50;
+}
+
+.session-type-indicator {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.session-type {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    color: white;
+}
+
+.session-type.roll {
+    background-color: #3f51b5;
+}
+
+.session-type.gmail {
+    background-color: #db4437;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #424242;
+}
+
+.select {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    border: 1px solid #2196f3;
+    cursor: pointer;
+}
+
+.select.disabled {
+    background-color: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    cursor: not-allowed;
+}
+
+.input {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+    font-size: 14px;
+}
+
+.input:disabled {
+    background-color: #f5f5f5;
+    color: #666;
+    cursor: not-allowed;
+}
+
+.mark-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #2196f3;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.mark-button:hover {
+    background-color: #1976d2;
+}
+
+.message-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 90%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 20px;
+}
+
+.error-text {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fee2e2;
+    padding: 12px 20px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    animation: slideDown 0.3s ease-out;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.error-text::before {
+    content: '⚠️';
+    font-size: 1.2em;
+}
+
+.success-text {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #dcfce7;
+    padding: 12px 20px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    animation: slideDown 0.3s ease-out;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.success-text::before {
+    content: '✅';
+    font-size: 1.2em;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px) translateX(-50%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) translateX(-50%);
+        opacity: 1;
+    }
+}
+
+.mobile-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 15px;
+}
+
+.mini-grid-container {
+    background-color: #ffffff;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    overflow-x: auto;
+}
+
+.mini-grid {
+    display: grid;
+    gap: 2px;
+}
+
+.mini-row {
+    display: grid;
+    grid-template-columns: repeat(13, 1fr);
+    gap: 2px;
+}
+
+.mini-cell {
+    aspect-ratio: 1;
+    border-radius: 2px;
+    border: 1px solid #e0e0e0;
+    background-color: #ffffff;
+}
+
+.mini-cell.used {
+    background-color: #66bb6a;
+}
+
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f5f5f5;
+}
+
+.loading-text {
+    font-size: 1.2rem;
+    color: #2196f3;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+/* Stats Styles */
+.stats-container {
+    margin: 20px auto;
+    padding: 24px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    max-width: 800px;
+}
+
+.stats-title {
+    color: #2c3e50;
+    margin-bottom: 24px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.stats-card {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    transition: transform 0.2s;
+    cursor: default;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+}
+
+.stats-icon {
+    font-size: 24px;
+    margin-right: 12px;
+}
+
+.stats-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stats-label {
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.stats-value {
+    color: #1e293b;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.absentees-container {
+    margin-top: 24px;
+    padding: 16px;
+    background-color: #f8fafc;
+    border-radius: 8px;
+}
+
+.absentees-title {
+    color: #2c3e50;
+    margin-bottom: 16px;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.absentees-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.absentee-badge {
+    padding: 6px 12px;
+    background-color: #e2e8f0;
+    color: #475569;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    .title {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+
+    .control-panel,
+    .session-info,
+    .stats-container {
+        padding: 15px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stats-card {
+        padding: 12px;
+    }
+
+    .stats-value {
+        font-size: 20px;
+    }
+
+    .absentees-container {
+        padding: 12px;
+    }
+
+    .absentee-badge {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-card {
+        padding: 10px;
+    }
+
+    .stats-icon {
+        font-size: 20px;
+    }
+
+    .stats-value {
+        font-size: 18px;
+    }
+
+    .mini-grid-container {
+        padding: 8px;
+    }
+
+    .mini-cell {
+        min-width: 20px;
+        min-height: 20px;
+    }
+
+    .message-container {
+        width: 95%;
+    }
+
+    .form-group {
+        margin-bottom: 12px;
+    }
+
+    .mark-button {
+        padding: 10px;
+        font-size: 14px;
+    }
+}
