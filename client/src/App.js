@@ -192,8 +192,22 @@ function App() {
                     </ProtectedRoute>
                   } 
                 />
-                <Route path="/chat" element={<ChatPage />} />
-                <Route path="/admin/chatbot-content" element={<AdminChatbotContent />} />
+                <Route 
+                  path="/chat" 
+                  element={
+                    <ProtectedRoute allowedRoles={['student', 'faculty']}>
+                      <ChatPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/chatbot-content" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <AdminChatbotContent />
+                    </ProtectedRoute>
+                  } 
+                />
               </Routes>
             </div>
           )}
