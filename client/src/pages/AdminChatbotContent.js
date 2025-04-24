@@ -1,72 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, TextField, Paper, Grid, CircularProgress, Chip, IconButton, Divider } from '@mui/material';
+import { Box, Typography, Button, TextField, Paper, Grid, CircularProgress } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import DeleteIcon from '@mui/icons-material/Delete';
-import InfoIcon from '@mui/icons-material/Info';
 import axios from 'axios';
 
-const VisuallyHiddenInput = styled('input')(`
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  height: 1px;
-  overflow: hidden;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  white-space: nowrap;
-  width: 1px;
-`);
-
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-}));
-
-const DocumentItem = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2),
-  marginBottom: theme.spacing(2),
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  borderRadius: '8px',
-  transition: 'transform 0.2s, box-shadow 0.2s',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: '0 6px 12px rgba(0, 0, 0, 0.1)',
-  },
-}));
-
-const ProgressWrapper = styled(Box)(({ theme }) => ({
-  position: 'relative',
-  width: '100%',
-  height: '8px',
-  backgroundColor: theme.palette.grey[200],
-  borderRadius: '4px',
-  marginTop: theme.spacing(2),
-  marginBottom: theme.spacing(1),
-}));
-
-const ProgressBar = styled(Box)(({ width, theme }) => ({
-  position: 'absolute',
-  height: '100%',
-  width: `${width}%`,
-  backgroundColor: theme.palette.primary.main,
-  borderRadius: '4px',
-  transition: 'width 0.3s ease',
-}));
-
 const AdminChatbotContent = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [documents, setDocuments] = useState([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('general');
   const [directInput, setDirectInput] = useState('');
   const [directTitle, setDirectTitle] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const categories = [
     { id: 'general', name: 'General Information' },
@@ -78,139 +22,33 @@ const AdminChatbotContent = () => {
   ];
 
   useEffect(() => {
-    fetchDocuments();
+    // Simplified loading state for initial debugging
+    setLoading(false);
   }, []);
 
-  const fetchDocuments = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get('/api/admin/chatbot/documents');
-      setDocuments(response.data.documents);
-      setError(null);
-    } catch (err) {
-      console.error('Failed to fetch documents:', err);
-      setError('Failed to load documents. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFileUpload = async (event) => {
-    const files = event.target.files;
-    if (!files.length) return;
-
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    const formData = new FormData();
-    for (let i = 0; i < files.length; i++) {
-      formData.append('documents', files[i]);
-    }
-    formData.append('category', selectedCategory);
-
-    try {
-      await axios.post('/api/admin/chatbot/documents/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          setUploadProgress(percentCompleted);
-        },
-      });
-
-      fetchDocuments();
-      setError(null);
-    } catch (err) {
-      console.error('Upload failed:', err);
-      setError('Failed to upload document. Please try again.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleDirectInputSubmit = async () => {
-    if (!directInput.trim() || !directTitle.trim()) return;
-
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    try {
-      // Simulate progress for better UX
-      const interval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(interval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 200);
-
-      await axios.post('/api/admin/chatbot/documents/text', {
-        title: directTitle,
-        content: directInput,
-        category: selectedCategory,
-      });
-
-      clearInterval(interval);
-      setUploadProgress(100);
-      
-      // Reset form
-      setDirectInput('');
-      setDirectTitle('');
-      
-      // Refresh document list
-      fetchDocuments();
-      setError(null);
-    } catch (err) {
-      console.error('Text submission failed:', err);
-      setError('Failed to submit text content. Please try again.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleDeleteDocument = async (documentId) => {
-    if (!window.confirm('Are you sure you want to delete this document?')) {
-      return;
-    }
-
-    try {
-      await axios.delete(`/api/admin/chatbot/documents/${documentId}`);
-      fetchDocuments();
-      setError(null);
-    } catch (err) {
-      console.error('Delete failed:', err);
-      setError('Failed to delete document. Please try again.');
-    }
-  };
-
-  const getCategoryName = (categoryId) => {
-    const category = categories.find((cat) => cat.id === categoryId);
-    return category ? category.name : categoryId;
+  const handleDirectInputSubmit = () => {
+    alert('This feature will be available soon!');
   };
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
+    <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
+      <Typography variant="h4" gutterBottom>
         Chatbot Knowledge Base Management
       </Typography>
-      <Typography variant="body1" color="text.secondary" paragraph>
+      
+      <Typography variant="body1" paragraph>
         Add university-specific content to train the chatbot. Upload documents or directly input text.
       </Typography>
 
       {error && (
-        <Box sx={{ mb: 3, p: 2, bgcolor: '#fdeded', borderRadius: 1 }}>
+        <Paper sx={{ p: 2, mb: 3, bgcolor: '#fdeded' }}>
           <Typography color="error">{error}</Typography>
-        </Box>
+        </Paper>
       )}
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <StyledPaper>
+          <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom>
               Upload Documents
             </Typography>
@@ -245,31 +83,21 @@ const AdminChatbotContent = () => {
               component="label"
               variant="contained"
               startIcon={<CloudUploadIcon />}
-              disabled={isUploading}
               fullWidth
             >
-              {isUploading ? 'Uploading...' : 'Select Files'}
-              <VisuallyHiddenInput
+              Select Files
+              <input
                 type="file"
+                hidden
                 multiple
                 accept=".pdf,.docx,.txt"
-                onChange={handleFileUpload}
               />
             </Button>
-
-            {isUploading && (
-              <ProgressWrapper>
-                <ProgressBar width={uploadProgress} />
-                <Box sx={{ textAlign: 'center', mt: 1 }}>
-                  <Typography variant="body2">{uploadProgress}%</Typography>
-                </Box>
-              </ProgressWrapper>
-            )}
-          </StyledPaper>
+          </Paper>
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <StyledPaper>
+          <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom>
               Direct Text Input
             </Typography>
@@ -332,16 +160,15 @@ const AdminChatbotContent = () => {
             <Button
               variant="contained"
               onClick={handleDirectInputSubmit}
-              disabled={isUploading || !directInput.trim() || !directTitle.trim()}
               fullWidth
             >
               Submit Content
             </Button>
-          </StyledPaper>
+          </Paper>
         </Grid>
       </Grid>
 
-      <StyledPaper>
+      <Paper sx={{ p: 3 }}>
         <Typography variant="h6" gutterBottom>
           Uploaded Knowledge Base Content
         </Typography>
@@ -359,42 +186,15 @@ const AdminChatbotContent = () => {
         ) : (
           <Box>
             {documents.map((doc) => (
-              <DocumentItem key={doc._id}>
+              <Paper key={doc._id} sx={{ p: 2, mb: 2, display: 'flex', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography variant="subtitle1">{doc.title || doc.filename}</Typography>
-                  <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-                    <Chip
-                      label={getCategoryName(doc.category)}
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                    />
-                    <Chip
-                      label={doc.type || 'Text'}
-                      size="small"
-                      variant="outlined"
-                    />
-                    <Chip
-                      label={new Date(doc.createdAt).toLocaleDateString()}
-                      size="small"
-                      variant="outlined"
-                    />
-                  </Box>
                 </Box>
-                <Box>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => handleDeleteDocument(doc._id)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Box>
-              </DocumentItem>
+              </Paper>
             ))}
           </Box>
         )}
-      </StyledPaper>
+      </Paper>
     </Box>
   );
 };
