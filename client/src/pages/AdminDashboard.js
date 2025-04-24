@@ -97,6 +97,16 @@ const AdminDashboard = () => {
             <p>View and export attendance reports</p>
           </div>
         </div>
+        
+        <div className="admin-card" onClick={() => navigateTo('/admin/chatbot-content')}>
+          <div className="card-icon">
+            <i className="fas fa-robot"></i>
+          </div>
+          <div className="card-content">
+            <h3>Chatbot Content</h3>
+            <p>Manage university information for the chatbot</p>
+          </div>
+        </div>
       </div>
     </div>
   );

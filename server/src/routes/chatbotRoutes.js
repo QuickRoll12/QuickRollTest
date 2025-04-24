@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const chatbotService = require('../services/chatbotService');
-const authMiddleware = require('../middleware/authMiddleware');
+const auth = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -38,7 +38,7 @@ const upload = multer({
 });
 
 // Route for chatbot queries
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
     const { query } = req.body;
     
@@ -60,7 +60,7 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 // Route to get chat history
-router.get('/history', authMiddleware, async (req, res) => {
+router.get('/history', auth, async (req, res) => {
   try {
     const history = await chatbotService.getUserChatHistory(req.user._id);
     return res.json({ history });
@@ -83,7 +83,7 @@ const isAdmin = (req, res, next) => {
 };
 
 // Apply admin middleware to all admin routes
-adminRouter.use(authMiddleware, isAdmin);
+adminRouter.use(auth, isAdmin);
 
 // Get all documents
 adminRouter.get('/documents', async (req, res) => {
