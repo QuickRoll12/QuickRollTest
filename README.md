@@ -1,6 +1,6 @@
 # Attendance System
 
-A real-time attendance tracking system with multi-session support for different courses and sections. Built with React, Node.js, Express, Socket.IO, and MongoDB.
+A real-time attendance tracking system with multi-session support for different courses and sections. Built with React, Node.js, Express, Socket.IO, and MongoDB..
 
 ## Environment Variables
 
