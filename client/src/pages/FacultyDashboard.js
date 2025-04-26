@@ -591,16 +591,16 @@ const FacultyDashboard = () => {
                                         <div
                                             key={`${i}-${j}`}
                                             style={{
-                                                width: '70px',
-                                                height: '70px',
+                                                width: '80px',
+                                                height: '80px',
                                                 border: '1px solid #ddd',
                                                 borderRadius: '10px',
-                                                margin: '5px',
+                                                margin: '2px',
                                                 display: 'flex',
                                                 justifyContent: 'center',
                                                 alignItems: 'center',
                                                 fontWeight: 'bold',
-                                                fontSize: '16px',
+                                                fontSize: '20px',
                                                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                                 transition: 'transform 0.2s, box-shadow 0.2s',
                                                 cursor: 'pointer',
