@@ -655,29 +655,34 @@ exports.verifyCode = async (req, res) => {
 // Handle faculty account requests
 exports.facultyRequest = async (req, res) => {
   try {
+    console.log('Faculty request received:', req.body);
     const { name, email, department, photoUrl } = req.body;
     // Get sectionsTeaching from the request body
     const sectionsTeaching = req.body.sectionsTeaching || [];
     
     // Validate inputs
     if (!name || !email || !department || !photoUrl) {
+      console.error('Missing required fields:', { name, email, department, photoUrl });
       return res.status(400).json({ message: 'All fields are required' });
     }
     
     // Validate sections
     if (!sectionsTeaching || !Array.isArray(sectionsTeaching) || sectionsTeaching.length === 0) {
+      console.error('Invalid sections:', sectionsTeaching);
       return res.status(400).json({ message: 'At least one teaching section must be specified' });
     }
     
     // Check if email already exists in users
     const existingUser = await User.findOne({ email });
     if (existingUser) {
+      console.log('Email already registered as a user:', email);
       return res.status(400).json({ message: 'Email already registered as a user' });
     }
     
     // Check if there's already a pending request with this email
     const existingRequest = await FacultyRequest.findOne({ email });
     if (existingRequest) {
+      console.log('A request with this email already exists:', email);
       return res.status(400).json({ message: 'A request with this email already exists' });
     }
     
@@ -690,7 +695,9 @@ exports.facultyRequest = async (req, res) => {
       photoUrl
     });
     
+    console.log('Saving new faculty request:', newRequest);
     await newRequest.save();
+    console.log('Faculty request saved successfully');
     
     // Notify admin (optional - could implement email notification here)
     
