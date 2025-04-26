@@ -591,30 +591,40 @@ const FacultyDashboard = () => {
                                         <div
                                             key={`${i}-${j}`}
                                             style={{
-                                                ...styles.cell,
+                                                width: '70px',
+                                                height: '70px',
+                                                border: '1px solid #ddd',
+                                                borderRadius: '10px',
+                                                margin: '5px',
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                                fontWeight: 'bold',
+                                                fontSize: '16px',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                                transition: 'transform 0.2s, box-shadow 0.2s',
+                                                cursor: 'pointer',
+                                                overflow: 'hidden',
                                                 backgroundColor: cell.used ? '#66bb6a' : '#ffffff',
                                                 color: cell.used ? '#ffffff' : '#000000',
                                                 padding: cell.used ? '0' : '10px',
-                                                position: 'relative',
-                                                overflow: 'hidden'
                                             }}
                                         >
                                             {cell.used ? (
-                                                <div style={styles.markedCell}>
-                                                    <img 
-                                                        src={cell.photo_url || '/default-student.png'} 
-                                                        alt={cell.studentName || 'Student'}
-                                                        style={styles.studentPhoto}
-                                                        onError={(e) => {
-                                                            e.target.onerror = null;
-                                                            e.target.src = '/default-student.png';
-                                                        }}
-                                                    />
-                                                    <div style={styles.studentInfo}>
-                                                        <span style={styles.studentName}>{cell.studentName}</span>
-                                                        <span style={styles.studentRoll}>Roll: {cell.studentRoll}</span>
-                                                    </div>
-                                                </div>
+                                                <img 
+                                                    src={cell.photo_url || '/default-student.png'} 
+                                                    alt={cell.studentName || 'Student'}
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        objectFit: 'cover',
+                                                        display: 'block',
+                                                    }}
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = '/default-student.png';
+                                                    }}
+                                                />
                                             ) : (
                                                 cell.code
                                             )}
@@ -753,7 +763,11 @@ const styles = {
         cursor: 'pointer',
         flex: 1,
         fontWeight: 'bold',
-        transition: 'background-color 0.3s'
+        transition: 'background-color 0.3s',
+        '&:hover': {
+            backgroundColor: '#f0f0f0',
+            color: 'black'
+        }
     },
     title: {
         fontSize: '32px',
@@ -843,22 +857,6 @@ const styles = {
         gridTemplateColumns: 'repeat(13, minmax(60px, 1fr))',
         gap: '8px',
         width: '100%',
-    },
-    cell: {
-        aspectRatio: '1',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        border: '1.9px solid #e0e0e0',
-        borderRadius: '10px',
-        fontSize: '33px',
-        fontWeight: '740',
-        transition: 'background-color 0.2s',
-        minWidth: '60px',
-        minHeight: '60px',
-        padding: '5px 0',
-        textAlign: 'center',
-        wordBreak: 'break-word',
     },
     sessionStats: {
         backgroundColor: '#ffffff',
@@ -1111,18 +1109,17 @@ const styles = {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '10px',
+        width: '100%',
+        height: '100%',
         backgroundColor: '#66bb6a',
         borderRadius: '10px',
-        color: '#ffffff',
         overflow: 'hidden',
     },
     studentPhoto: {
-        width: '40px',
-        height: '40px',
-        borderRadius: '50%',
+        width: '100%',
+        height: '100%',
         objectFit: 'cover',
-        marginBottom: '10px',
+        display: 'block',
     },
     studentInfo: {
         textAlign: 'center',
