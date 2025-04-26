@@ -600,7 +600,7 @@ const FacultyDashboard = () => {
                                                 justifyContent: 'center',
                                                 alignItems: 'center',
                                                 fontWeight: 'bold',
-                                                fontSize: '20px',
+                                                fontSize: '32px',
                                                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                                 transition: 'transform 0.2s, box-shadow 0.2s',
                                                 cursor: 'pointer',
