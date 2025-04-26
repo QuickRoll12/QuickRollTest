@@ -591,8 +591,8 @@ const FacultyDashboard = () => {
                                         <div
                                             key={`${i}-${j}`}
                                             style={{
-                                                width: '80px',
-                                                height: '80px',
+                                                width: '100px',
+                                                height: '100px',
                                                 border: '1px solid #ddd',
                                                 borderRadius: '10px',
                                                 margin: '2px',
