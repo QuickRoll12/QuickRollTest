@@ -58,7 +58,11 @@ class AttendanceService {
         const newGrid = Array(7).fill().map(() => 
             Array(13).fill().map(() => ({
                 code: this.generateUniqueCode(),
-                used: false
+                used: false,
+                studentName: null,
+                studentRoll: null,
+                studentEmail: null,
+                photo_url: null
             }))
         );
         return newGrid;
@@ -309,6 +313,19 @@ class AttendanceService {
         
         console.log(`Marking attendance with identifier: ${identifier}, session type: ${sessionData.sessionType}`);
         
+        // Fetch user data to get the photo_url and other student information
+        const user = await User.findById(userId);
+        if (!user) {
+            sessionData.grid[row][col].used = false;
+            throw new Error('User not found');
+        }
+        
+        // Store student information in the grid cell
+        sessionData.grid[row][col].studentName = user.name;
+        sessionData.grid[row][col].studentRoll = user.classRollNumber;
+        sessionData.grid[row][col].studentEmail = user.email;
+        sessionData.grid[row][col].photo_url = user.photo_url || '/default-student.png';
+        
         await Proxy.create({ 
             fingerprint, 
             ipAddress: ip, 
@@ -362,7 +379,11 @@ class AttendanceService {
                         // Generate new codes for unused cells
                         return {
                             code: this.generateUniqueCode(),
-                            used: false
+                            used: false,
+                            studentName: null,
+                            studentRoll: null,
+                            studentEmail: null,
+                            photo_url: null
                         };
                     }
                 })

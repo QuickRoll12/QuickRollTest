@@ -160,6 +160,7 @@ const AdminDataUpload = () => {
             <li><strong>department</strong> - Semester</li>
             <li><strong>classRollNumber</strong> - Class roll number</li>
             <li><strong>universityRollNumber</strong> - University roll number</li>
+            <li><strong>photo_url</strong> - URL to student's photo (optional)</li>
           </ul>
           <p>All students will be created with the role 'student' and will be required to change their password on first login.</p>
         </div>

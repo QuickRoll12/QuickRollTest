@@ -62,6 +62,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  photo_url: {
+    type: String,
+    default: '/default-student.png' // Default placeholder image
+  },
   sectionId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Section',

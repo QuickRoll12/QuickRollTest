@@ -250,6 +250,7 @@ exports.uploadStudentData = async (req, res) => {
           semester: row.semester,
           classRollNumber: row.classRollNumber,
           universityRollNumber: row.universityRollNumber,
+          photo_url: row.photo_url || '/default-student.png', // Use provided photo URL or default
           sectionId: defaultSectionId, // Use the default section ID
           isVerified: true, // Auto-verify student accounts
           passwordChangeRequired: true, // Always require password change on first login

@@ -594,9 +594,30 @@ const FacultyDashboard = () => {
                                                 ...styles.cell,
                                                 backgroundColor: cell.used ? '#66bb6a' : '#ffffff',
                                                 color: cell.used ? '#ffffff' : '#000000',
+                                                padding: cell.used ? '0' : '10px',
+                                                position: 'relative',
+                                                overflow: 'hidden'
                                             }}
                                         >
-                                            {cell.code}
+                                            {cell.used ? (
+                                                <div style={styles.markedCell}>
+                                                    <img 
+                                                        src={cell.photo_url || '/default-student.png'} 
+                                                        alt={cell.studentName || 'Student'}
+                                                        style={styles.studentPhoto}
+                                                        onError={(e) => {
+                                                            e.target.onerror = null;
+                                                            e.target.src = '/default-student.png';
+                                                        }}
+                                                    />
+                                                    <div style={styles.studentInfo}>
+                                                        <span style={styles.studentName}>{cell.studentName}</span>
+                                                        <span style={styles.studentRoll}>Roll: {cell.studentRoll}</span>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                cell.code
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -1084,6 +1105,38 @@ const styles = {
         fontSize: '18px',
         color: '#2196f3',
         fontWeight: 'bold',
+    },
+    markedCell: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '10px',
+        backgroundColor: '#66bb6a',
+        borderRadius: '10px',
+        color: '#ffffff',
+        overflow: 'hidden',
+    },
+    studentPhoto: {
+        width: '40px',
+        height: '40px',
+        borderRadius: '50%',
+        objectFit: 'cover',
+        marginBottom: '10px',
+    },
+    studentInfo: {
+        textAlign: 'center',
+    },
+    studentName: {
+        fontSize: '14px',
+        fontWeight: 'bold',
+        color: '#ffffff',
+        textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
+    },
+    studentRoll: {
+        fontSize: '12px',
+        color: '#ffffff',
+        textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
     },
 };
 
