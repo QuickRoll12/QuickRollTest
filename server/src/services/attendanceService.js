@@ -350,7 +350,113 @@ class AttendanceService {
     
         return { success: true, message: 'Attendance marked successfully', grid: sessionData.grid };
     }
-    
+
+    // Handle full-screen violation for a student
+    async handleFullScreenViolation(department, semester, section, rollNumber, fingerprint, webRTCIPs, userId, req, gmail = null) {
+        try {
+            console.log(`[${new Date().toISOString()}] - Full-screen violation detected`);
+            
+            this.validateFields(department, semester, section);
+            
+            const sessionKey = this.generateSessionKey(department, semester, section);
+            const sessionData = this.sessions.get(sessionKey);
+            
+            if (!sessionData?.active) {
+                throw new Error('No active session found');
+            }
+            
+            const isGmailSession = sessionData.sessionType === 'gmail';
+            
+            // For roll-based sessions
+            if (!isGmailSession) {
+                if (!rollNumber || !/^\d{2}$/.test(rollNumber)) {
+                    throw new Error('Invalid roll number format');
+                }
+                
+                // Check if the student is present
+                if (sessionData.presentStudents.has(rollNumber)) {
+                    console.log(`[${new Date().toISOString()}] - Removing student with roll ${rollNumber} from present list due to full-screen violation`);
+                    
+                    // Remove from present list
+                    sessionData.presentStudents.delete(rollNumber);
+                    
+                    // Find the cell in the grid that was used by this student and mark it as unused
+                    for (let i = 0; i < sessionData.grid.length; i++) {
+                        for (let j = 0; j < sessionData.grid[i].length; j++) {
+                            const cell = sessionData.grid[i][j];
+                            if (cell.studentRoll === rollNumber) {
+                                // Mark cell as unused
+                                sessionData.grid[i][j].used = false;
+                                sessionData.grid[i][j].studentRoll = null;
+                                sessionData.grid[i][j].studentName = null;
+                                sessionData.grid[i][j].photo_url = null;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Log the violation
+                    console.log(`Student with roll ${rollNumber} marked absent due to full-screen violation`);
+                    
+                    return {
+                        success: true,
+                        message: `Student with roll ${rollNumber} marked absent due to full-screen violation`
+                    };
+                } else {
+                    return {
+                        success: false,
+                        message: 'Student not found in present list'
+                    };
+                }
+            } 
+            // For Gmail-based sessions
+            else {
+                if (!gmail) {
+                    throw new Error('Email is required for Gmail-based sessions');
+                }
+                
+                // Check if the student is present by finding their cell in the grid
+                let studentFound = false;
+                
+                for (let i = 0; i < sessionData.grid.length; i++) {
+                    for (let j = 0; j < sessionData.grid[i].length; j++) {
+                        const cell = sessionData.grid[i][j];
+                        if (cell.studentEmail === gmail) {
+                            // Mark cell as unused
+                            sessionData.grid[i][j].used = false;
+                            sessionData.grid[i][j].studentEmail = null;
+                            sessionData.grid[i][j].studentName = null;
+                            sessionData.grid[i][j].photo_url = null;
+                            studentFound = true;
+                            break;
+                        }
+                    }
+                    if (studentFound) break;
+                }
+                
+                if (studentFound) {
+                    // Log the violation
+                    console.log(`Student with email ${gmail} marked absent due to full-screen violation`);
+                    
+                    return {
+                        success: true,
+                        message: `Student with email ${gmail} marked absent due to full-screen violation`
+                    };
+                } else {
+                    return {
+                        success: false,
+                        message: 'Student not found in present list'
+                    };
+                }
+            }
+        } catch (error) {
+            console.error('Error handling full-screen violation:', error);
+            return {
+                success: false,
+                message: error.message || 'Failed to handle full-screen violation'
+            };
+        }
+    }
 
     refreshCodes(department, semester, section) {
         this.validateFields(department, semester, section);

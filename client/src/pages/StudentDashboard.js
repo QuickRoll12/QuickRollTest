@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import io from "socket.io-client";
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import getWebRTCIPs from '../utils/webRTCDetector';
 import '../styles/StudentDashboard.css';
+import '../styles/FullScreenWarning.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
 
@@ -25,6 +26,10 @@ const StudentDashboard = () => {
     const [sessionActive, setSessionActive] = useState(false);
     const [sessionStats, setSessionStats] = useState(null);
     const [sessionType, setSessionType] = useState('roll'); // 'roll' or 'gmail'
+    const [isFullScreen, setIsFullScreen] = useState(false);
+    const [showFullScreenWarning, setShowFullScreenWarning] = useState(false);
+    const [fullScreenExitTimeout, setFullScreenExitTimeout] = useState(null);
+    const fullScreenRequestedRef = useRef(false);
 
     // Initialize fingerprint and WebRTC IPs
     useEffect(() => {
@@ -87,6 +92,12 @@ const StudentDashboard = () => {
                 // Store session type (roll or gmail)
                 if (status.sessionType) {
                     setSessionType(status.sessionType);
+                }
+                
+                // If session is active and we haven't requested fullscreen yet, request it
+                if (status.active && !fullScreenRequestedRef.current) {
+                    requestFullScreen();
+                    fullScreenRequestedRef.current = true;
                 }
                 
                 // Handle codes refreshed notification
@@ -156,11 +167,21 @@ const StudentDashboard = () => {
             }
         };
 
+        const handleFullScreenViolationResponse = (response) => {
+            if (response.success) {
+                setMessage('');
+                setError(response.message || 'You have been marked absent due to exiting full-screen mode');
+            } else {
+                setError(response.message || 'Error processing full-screen violation');
+            }
+        };
+
         socket.on('sessionStatus', handleSessionStatus);
         socket.on('updateGrid', handleUpdateGrid);
         socket.on('sessionEnded', handleSessionEnded);
         socket.on('error', handleError);
         socket.on('attendanceResponse', handleAttendanceResponse);
+        socket.on('fullScreenViolationResponse', handleFullScreenViolationResponse);
 
         // Check current session status when mounting or changing semester
         if (selectedSemester) {
@@ -177,6 +198,7 @@ const StudentDashboard = () => {
             socket.off('sessionEnded', handleSessionEnded);
             socket.off('error', handleError);
             socket.off('attendanceResponse', handleAttendanceResponse);
+            socket.off('fullScreenViolationResponse', handleFullScreenViolationResponse);
         };
     }, [socket, selectedSemester, user]);
 
@@ -195,6 +217,176 @@ const StudentDashboard = () => {
         }
     }, [socket, selectedSemester, user]);
 
+    // Add full-screen change detection
+    useEffect(() => {
+        // Function to check if we're in full-screen mode
+        const checkFullScreen = () => {
+            const isInFullScreen = 
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement;
+            
+            setIsFullScreen(!!isInFullScreen);
+            
+            // If we were in full-screen but now we're not, and there's an active session
+            if (!isInFullScreen && sessionActive && fullScreenRequestedRef.current) {
+                handleFullScreenExit();
+            }
+        };
+
+        // Function to handle visibility change (tab switching)
+        const handleVisibilityChange = () => {
+            if (document.hidden && sessionActive && isFullScreen) {
+                // User switched tabs while in full-screen mode
+                handleFullScreenExit();
+            }
+        };
+
+        // Function to handle when app loses focus (mobile)
+        const handleAppBlur = () => {
+            if (sessionActive && isFullScreen) {
+                // User minimized the browser or switched apps
+                handleFullScreenExit();
+            }
+        };
+
+        // Function to handle page unload/navigation
+        const handleBeforeUnload = (e) => {
+            if (sessionActive && isFullScreen) {
+                // User is navigating away or closing the browser
+                // Note: This won't prevent navigation, just record the violation
+                socket.emit('fullScreenViolation', {
+                    department: user.course,
+                    semester: selectedSemester,
+                    section: user.section,
+                    rollNumber: sessionType === 'roll' ? user.classRollNumber : null,
+                    gmail: sessionType === 'gmail' ? user.email : null,
+                    fingerprint,
+                    webRTCIPs,
+                    token: localStorage.getItem("token"),
+                    device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "pc" 
+                });
+            }
+        };
+
+        // Add event listeners
+        document.addEventListener('fullscreenchange', checkFullScreen);
+        document.addEventListener('webkitfullscreenchange', checkFullScreen);
+        document.addEventListener('mozfullscreenchange', checkFullScreen);
+        document.addEventListener('MSFullscreenChange', checkFullScreen);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('blur', handleAppBlur);
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        // Cleanup
+        return () => {
+            document.removeEventListener('fullscreenchange', checkFullScreen);
+            document.removeEventListener('webkitfullscreenchange', checkFullScreen);
+            document.removeEventListener('mozfullscreenchange', checkFullScreen);
+            document.removeEventListener('MSFullscreenChange', checkFullScreen);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('blur', handleAppBlur);
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [sessionActive, isFullScreen, socket, user, selectedSemester, sessionType, fingerprint, webRTCIPs]);
+
+    // Function to request full-screen
+    const requestFullScreen = () => {
+        const docEl = document.documentElement;
+        
+        const requestMethod = 
+            docEl.requestFullscreen || 
+            docEl.webkitRequestFullscreen || 
+            docEl.mozRequestFullScreen || 
+            docEl.msRequestFullscreen;
+            
+        if (requestMethod) {
+            requestMethod.call(docEl);
+        }
+    };
+
+    // Function to exit full-screen
+    const exitFullScreen = () => {
+        const exitMethod = 
+            document.exitFullscreen || 
+            document.webkitExitFullscreen || 
+            document.mozCancelFullScreen || 
+            document.msExitFullscreen;
+            
+        if (exitMethod) {
+            exitMethod.call(document);
+        }
+    };
+
+    // Function to handle full-screen exit
+    const handleFullScreenExit = () => {
+        // Only show warning if we're not already showing it
+        if (!showFullScreenWarning) {
+            setShowFullScreenWarning(true);
+            
+            // Set a timeout to mark the student absent if they don't return to full-screen
+            const timeout = setTimeout(() => {
+                if (socket && sessionActive) {
+                    socket.emit('fullScreenViolation', {
+                        department: user.course,
+                        semester: selectedSemester,
+                        section: user.section,
+                        rollNumber: sessionType === 'roll' ? user.classRollNumber : null,
+                        gmail: sessionType === 'gmail' ? user.email : null,
+                        fingerprint,
+                        webRTCIPs,
+                        token: localStorage.getItem("token"), // sending token for verification
+                        device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "pc" 
+                    });
+                }
+            }, 30000); // 30 seconds
+            setFullScreenExitTimeout(timeout);
+        }
+    };
+
+    // Function to handle returning to full-screen
+    const handleReturnToFullScreen = () => {
+        // Clear the timeout to prevent marking absent
+        if (fullScreenExitTimeout) {
+            clearTimeout(fullScreenExitTimeout);
+            setFullScreenExitTimeout(null);
+        }
+        
+        // Hide the warning
+        setShowFullScreenWarning(false);
+        
+        // Request full-screen again
+        requestFullScreen();
+    };
+
+    // Function to confirm exit from full-screen
+    const handleConfirmExit = () => {
+        // Clear the timeout since user has confirmed exit
+        if (fullScreenExitTimeout) {
+            clearTimeout(fullScreenExitTimeout);
+            setFullScreenExitTimeout(null);
+        }
+        
+        // Hide the warning
+        setShowFullScreenWarning(false);
+        
+        // Mark the student as absent due to full-screen violation
+        if (socket && sessionActive) {
+            socket.emit('fullScreenViolation', {
+                department: user.course,
+                semester: selectedSemester,
+                section: user.section,
+                rollNumber: sessionType === 'roll' ? user.classRollNumber : null,
+                gmail: sessionType === 'gmail' ? user.email : null,
+                fingerprint,
+                webRTCIPs,
+                token: localStorage.getItem("token"), // sending token for verification
+                device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "pc" 
+            });
+        }
+    };
+
     const markAttendance = () => {
         if (!code) {
             setError('Please enter the attendance code');
@@ -208,6 +400,12 @@ const StudentDashboard = () => {
 
         if (!fingerprint || !webRTCIPs) {
             setError('Device identification not ready. Please wait a few seconds and try again.');
+            return;
+        }
+
+        // Check if in full-screen mode
+        if (!isFullScreen) {
+            setError('You must be in full-screen mode to mark attendance. Please click the "Enter Full Screen" button.');
             return;
         }
 
@@ -290,6 +488,13 @@ const StudentDashboard = () => {
             <div className="container">
                 <h2 className="title">Student Dashboard</h2>
                 
+                {isFullScreen && (
+                    <div className="fullscreen-indicator">
+                        <i className="fas fa-expand"></i>
+                        Full-screen mode active
+                    </div>
+                )}
+                
                 <div className="control-panel">
                     <div className="form-group">
                         <label className="label">Department:</label>
@@ -334,6 +539,18 @@ const StudentDashboard = () => {
 
                 {sessionActive && (
                     <div className="mobile-container">
+                        {!isFullScreen && (
+                            <div className="fullscreen-prompt">
+                                <p>You must be in full-screen mode to mark attendance.</p>
+                                <button 
+                                    onClick={requestFullScreen}
+                                    className="mark-button"
+                                >
+                                    Enter Full Screen
+                                </button>
+                            </div>
+                        )}
+                        
                         <div className="session-type-indicator">
                             <div className={`session-type ${sessionType === 'gmail' ? 'gmail' : 'roll'}`}>
                                 {sessionType === 'gmail' ? 'Gmail-based Attendance' : 'Roll Number-based Attendance'}
@@ -441,6 +658,36 @@ const StudentDashboard = () => {
                     <div className="message-container">
                         {error && <div className="error-text">{error}</div>}
                         {message && <div className="success-text">{message}</div>}
+                    </div>
+                )}
+                
+                {/* Full-screen exit warning modal */}
+                {showFullScreenWarning && (
+                    <div className="fullscreen-warning-overlay">
+                        <div className="fullscreen-warning-container">
+                            <div className="fullscreen-warning-icon">
+                                <i className="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h3 className="fullscreen-warning-title">Warning!</h3>
+                            <p className="fullscreen-warning-message">
+                                You have exited full-screen mode. This action will mark you as absent.
+                                Do you want to return to full-screen mode or exit anyway?
+                            </p>
+                            <div className="fullscreen-warning-buttons">
+                                <button 
+                                    className="fullscreen-warning-exit-btn"
+                                    onClick={handleConfirmExit}
+                                >
+                                    Exit (Mark Absent)
+                                </button>
+                                <button 
+                                    className="fullscreen-warning-return-btn"
+                                    onClick={handleReturnToFullScreen}
+                                >
+                                    Return to Page
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

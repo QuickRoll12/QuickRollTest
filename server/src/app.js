@@ -15,7 +15,6 @@ const facultyRoutes = require('./routes/facultyRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const sheetMappingRoutes = require('./routes/sheetMappingRoutes');
 const attendanceRecordRoutes = require('./routes/attendanceRecordRoutes');
-const chatbotRoutes = require('./routes/chatbotRoutes');
 const path = require('path');
 
 const app = express();
@@ -89,7 +88,7 @@ app.use('/api', facultyRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/sheet-mappings', sheetMappingRoutes);
 app.use('/api/attendance', attendanceRecordRoutes);
-app.use('/api/chatbot', chatbotRoutes);
+
 
 // MongoDB connection with proper options
 mongoose.connect(process.env.MONGODB_URI, {
@@ -378,6 +377,66 @@ io.on('connection', (socket) => {
             });
         } catch (error) {
             console.error('Error refreshing codes:', error.message);
+            socket.emit('error', { message: error.message });
+        }
+    });
+
+    // Handle full-screen violation
+    socket.on('fullScreenViolation', async ({ department, semester, section, rollNumber, gmail, fingerprint, webRTCIPs, token, device }) => {
+        console.log(`⚠️ Full-screen violation - Department: ${department}, Semester: ${semester}, Section: ${section}`);
+        
+        try {
+            // Verify user identity from token
+            const userId = socket.user.id;
+            
+            // Get client IP address - try different socket properties for IP
+            let ipAddress = socket.handshake.headers['x-forwarded-for'] || 
+                           socket.handshake.headers['x-real-ip'] ||
+                           socket.handshake.address;
+                           
+            // If comma-separated IPs, get the first one (client IP)
+            if (ipAddress && ipAddress.includes(',')) {
+                ipAddress = ipAddress.split(',')[0].trim();
+            }
+            
+            // Create request object for attendanceService
+            const req = {
+                ip: ipAddress,
+                userName: socket.user.name,
+                userAgent: socket.handshake.headers['user-agent'] || ''
+            };
+            
+            // Handle the full-screen violation
+            const result = await attendanceService.handleFullScreenViolation(
+                department, 
+                semester, 
+                section, 
+                rollNumber, 
+                fingerprint, 
+                webRTCIPs, 
+                userId, 
+                req, 
+                gmail
+            );
+            
+            // Notify the student about the result
+            socket.emit('fullScreenViolationResponse', result);
+            
+            // If successful, update the grid for all users in the room
+            if (result.success) {
+                const sessionKey = attendanceService.generateSessionKey(department, semester, section);
+                const sessionData = attendanceService.getSessionStatus(department, semester, section);
+                
+                // Broadcast updated grid to all clients in the room
+                socket.to(sessionKey).emit('updateGrid', {
+                    grid: sessionData.grid,
+                    department,
+                    semester,
+                    section
+                });
+            }
+        } catch (error) {
+            console.error('Error handling full-screen violation:', error.message);
             socket.emit('error', { message: error.message });
         }
     });
