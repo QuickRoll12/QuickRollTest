@@ -30,6 +30,8 @@ const StudentDashboard = () => {
     const [showFullScreenWarning, setShowFullScreenWarning] = useState(false);
     const [fullScreenExitTimeout, setFullScreenExitTimeout] = useState(null);
     const fullScreenRequestedRef = useRef(false);
+    const fullScreenDimensionsRef = useRef({ width: 0, height: 0 });
+    const dimensionCheckIntervalRef = useRef(null);
 
     // Initialize fingerprint and WebRTC IPs
     useEffect(() => {
@@ -303,6 +305,117 @@ const StudentDashboard = () => {
             
         if (requestMethod) {
             requestMethod.call(docEl);
+            
+            // Store the full-screen dimensions after a short delay to ensure transition is complete
+            setTimeout(() => {
+                fullScreenDimensionsRef.current = {
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    screenWidth: window.screen.width,
+                    screenHeight: window.screen.height,
+                    ratio: (window.innerWidth / window.screen.width) * (window.innerHeight / window.screen.height)
+                };
+                
+                console.log('Full screen dimensions stored:', fullScreenDimensionsRef.current);
+                
+                // Start periodic dimension checks
+                startDimensionChecks();
+            }, 1000);
+        }
+    };
+
+    // Function to start periodic dimension checks
+    const startDimensionChecks = () => {
+        // Clear any existing interval
+        if (dimensionCheckIntervalRef.current) {
+            clearInterval(dimensionCheckIntervalRef.current);
+        }
+        
+        // Set up a new interval to check dimensions every 10 seconds
+        dimensionCheckIntervalRef.current = setInterval(() => {
+            checkDimensions();
+        }, 10000); // 10 seconds
+    };
+
+    // Function to check if dimensions have changed significantly
+    const checkDimensions = () => {
+        // Only check if we're supposed to be in full-screen mode
+        if (!isFullScreen || !sessionActive || !fullScreenRequestedRef.current) return;
+        
+        const storedDimensions = fullScreenDimensionsRef.current;
+        if (!storedDimensions.width || !storedDimensions.height) return;
+        
+        const currentWidth = window.innerWidth;
+        const currentHeight = window.innerHeight;
+        const currentScreenWidth = window.screen.width;
+        const currentScreenHeight = window.screen.height;
+        
+        // Calculate the current ratio of window size to screen size
+        const currentRatio = (currentWidth / currentScreenWidth) * (currentHeight / currentScreenHeight);
+        
+        // Calculate the difference between current and stored dimensions
+        const widthDiff = Math.abs(currentWidth - storedDimensions.width) / storedDimensions.width;
+        const heightDiff = Math.abs(currentHeight - storedDimensions.height) / storedDimensions.height;
+        const ratioDiff = Math.abs(currentRatio - storedDimensions.ratio) / storedDimensions.ratio;
+        
+        console.log('Dimension check:', { 
+            widthDiff, 
+            heightDiff, 
+            ratioDiff,
+            currentRatio,
+            storedRatio: storedDimensions.ratio
+        });
+        
+        // If dimensions have changed significantly, it might be split-screen or floating window
+        // Using a threshold of 5% change to account for minor UI adjustments
+        const THRESHOLD = 0.05;
+        
+        if (widthDiff > THRESHOLD || heightDiff > THRESHOLD || ratioDiff > THRESHOLD) {
+            console.log('Detected possible split-screen or floating window');
+            
+            // Check if the browser reports we're still in full-screen mode
+            const isInFullScreen = 
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement;
+            
+            // If browser thinks we're in full-screen but dimensions don't match, it's likely split-screen
+            if (isInFullScreen) {
+                console.log('Browser reports full-screen but dimensions changed - likely split-screen');
+                handleSplitScreenDetected();
+            } else {
+                // If browser also reports not in full-screen, handle as a regular exit
+                handleFullScreenExit();
+            }
+        }
+    };
+
+    // Function to handle split-screen detection
+    const handleSplitScreenDetected = () => {
+        // Only show warning if we're not already showing it
+        if (!showFullScreenWarning) {
+            setShowFullScreenWarning(true);
+            setError('Split-screen or floating window detected. This is not allowed during attendance.');
+            
+            // Set a timeout to mark the student absent if they don't return to full-screen
+            const timeout = setTimeout(() => {
+                if (socket && sessionActive) {
+                    socket.emit('fullScreenViolation', {
+                        department: user.course,
+                        semester: selectedSemester,
+                        section: user.section,
+                        rollNumber: sessionType === 'roll' ? user.classRollNumber : null,
+                        gmail: sessionType === 'gmail' ? user.email : null,
+                        fingerprint,
+                        webRTCIPs,
+                        token: localStorage.getItem("token"),
+                        device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "pc",
+                        violationType: 'split-screen'
+                    });
+                }
+            }, 30000); // 30 seconds
+            setFullScreenExitTimeout(timeout);
         }
     };
 
@@ -316,6 +429,12 @@ const StudentDashboard = () => {
             
         if (exitMethod) {
             exitMethod.call(document);
+            
+            // Clear dimension check interval
+            if (dimensionCheckIntervalRef.current) {
+                clearInterval(dimensionCheckIntervalRef.current);
+                dimensionCheckIntervalRef.current = null;
+            }
         }
     };
 
@@ -336,8 +455,9 @@ const StudentDashboard = () => {
                         gmail: sessionType === 'gmail' ? user.email : null,
                         fingerprint,
                         webRTCIPs,
-                        token: localStorage.getItem("token"), // sending token for verification
-                        device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "pc" 
+                        token: localStorage.getItem("token"),
+                        device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "pc",
+                        violationType: 'fullscreen-exit'
                     });
                 }
             }, 5000); // 30 seconds
@@ -355,6 +475,7 @@ const StudentDashboard = () => {
         
         // Hide the warning
         setShowFullScreenWarning(false);
+        setError('');
         
         // Request full-screen again
         requestFullScreen();
@@ -381,8 +502,9 @@ const StudentDashboard = () => {
                 gmail: sessionType === 'gmail' ? user.email : null,
                 fingerprint,
                 webRTCIPs,
-                token: localStorage.getItem("token"), // sending token for verification
-                device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "pc" 
+                token: localStorage.getItem("token"),
+                device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "pc",
+                violationType: 'fullscreen-exit'
             });
         }
     };
