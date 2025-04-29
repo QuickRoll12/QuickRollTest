@@ -32,6 +32,7 @@ const StudentDashboard = () => {
     const fullScreenRequestedRef = useRef(false);
     const fullScreenDimensionsRef = useRef({ width: 0, height: 0 });
     const dimensionCheckIntervalRef = useRef(null);
+    const [isIOS, setIsIOS] = useState(false);
 
     // Initialize fingerprint and WebRTC IPs
     useEffect(() => {
@@ -53,6 +54,21 @@ const StudentDashboard = () => {
         };
         initDeviceIdentifiers();
     }, []);
+
+    // Initialize device detection
+    useEffect(() => {
+        // Check if it's an iOS device
+        const iosCheck = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        setIsIOS(iosCheck);
+        
+        // If it's iOS, start security checks when a session is active
+        if (iosCheck && sessionActive) {
+            startIOSSecurityChecks();
+            // Set fullscreen to true for iOS to bypass the requirement
+            setIsFullScreen(true);
+            fullScreenRequestedRef.current = true;
+        }
+    }, [sessionActive]);
 
     // Socket connection effect
     useEffect(() => {
@@ -295,6 +311,26 @@ const StudentDashboard = () => {
 
     // Function to request full-screen
     const requestFullScreen = () => {
+        // Check if it's an iOS device
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        
+        if (isIOS) {
+            // For iOS devices, we can't use the Fullscreen API
+            console.log('iOS device detected - fullscreen API not supported');
+            
+            // Set a flag to bypass the fullscreen requirement for iOS
+            setIsFullScreen(true); // Pretend we're in fullscreen for iOS
+            fullScreenRequestedRef.current = true;
+            
+            // Show a message to the user
+            setMessage('Full-screen mode is not supported on iOS devices. You can still mark attendance.');
+            
+            // Start periodic checks for other security measures
+            startIOSSecurityChecks();
+            
+            return;
+        }
+        
         const docEl = document.documentElement;
         
         const requestMethod = 
@@ -306,22 +342,80 @@ const StudentDashboard = () => {
         if (requestMethod) {
             requestMethod.call(docEl);
             
-            // Store the full-screen dimensions after a short delay to ensure transition is complete
+            // Start periodic dimension checks after a short delay to ensure transition is complete
             setTimeout(() => {
-                fullScreenDimensionsRef.current = {
-                    width: window.innerWidth,
-                    height: window.innerHeight,
-                    screenWidth: window.screen.width,
-                    screenHeight: window.screen.height,
-                    ratio: (window.innerWidth / window.screen.width) * (window.innerHeight / window.screen.height)
-                };
+                // Verify we're in true full-screen before allowing attendance
+                verifyTrueFullScreen();
                 
-                console.log('Full screen dimensions stored:', fullScreenDimensionsRef.current);
-                
-                // Start periodic dimension checks
+                // Start periodic checks
                 startDimensionChecks();
             }, 1000);
+        } else {
+            // Browser doesn't support fullscreen API
+            console.log('Fullscreen API not supported in this browser');
+            setError('Your browser doesn\'t support full-screen mode. Please use a different browser.');
         }
+    };
+
+    // Function to handle iOS-specific security checks
+    const startIOSSecurityChecks = () => {
+        // Clear any existing interval
+        if (dimensionCheckIntervalRef.current) {
+            clearInterval(dimensionCheckIntervalRef.current);
+        }
+        
+        // For iOS, we'll use visibility change as the primary security measure
+        // Set up a new interval to check visibility every 5 seconds
+        dimensionCheckIntervalRef.current = setInterval(() => {
+            if (document.hidden && sessionActive) {
+                // User switched tabs or minimized browser
+                handleFullScreenExit();
+            }
+        }, 5000); // 5 seconds
+    };
+
+    // Function to verify we're in true full-screen (not split-screen)
+    const verifyTrueFullScreen = () => {
+        // Get screen dimensions
+        const screenWidth = window.screen.width;
+        const screenHeight = window.screen.height;
+        
+        // Get window dimensions
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        
+        // Calculate aspect ratios
+        const screenAspectRatio = screenWidth / screenHeight;
+        const windowAspectRatio = windowWidth / windowHeight;
+        const aspectRatioDiff = Math.abs(screenAspectRatio - windowAspectRatio);
+        
+        // Calculate area utilization (should be close to 1.0 in true full-screen)
+        const areaUtilization = (windowWidth * windowHeight) / (screenWidth * screenHeight);
+        
+        console.log('Initial full-screen verification:', { 
+            screenAspectRatio,
+            windowAspectRatio,
+            aspectRatioDiff,
+            areaUtilization,
+            windowWidth,
+            windowHeight,
+            screenWidth,
+            screenHeight
+        });
+        
+        // In true full-screen, area utilization should be > 0.9 (90%)
+        // and aspect ratio difference should be minimal
+        const ASPECT_RATIO_THRESHOLD = 0.1; // 10% difference in aspect ratio
+        const AREA_UTILIZATION_THRESHOLD = 0.9; // 90% of screen area should be used
+        
+        // If not in true full-screen, show warning
+        if (aspectRatioDiff > ASPECT_RATIO_THRESHOLD || areaUtilization < AREA_UTILIZATION_THRESHOLD) {
+            console.log('Initial verification detected split-screen or floating window');
+            handleSplitScreenDetected();
+            return false;
+        }
+        
+        return true;
     };
 
     // Function to start periodic dimension checks
@@ -342,47 +436,54 @@ const StudentDashboard = () => {
         // Only check if we're supposed to be in full-screen mode
         if (!isFullScreen || !sessionActive || !fullScreenRequestedRef.current) return;
         
-        const storedDimensions = fullScreenDimensionsRef.current;
-        if (!storedDimensions.width || !storedDimensions.height) return;
+        // Get current screen dimensions
+        const screenWidth = window.screen.width;
+        const screenHeight = window.screen.height;
         
-        const currentWidth = window.innerWidth;
-        const currentHeight = window.innerHeight;
-        const currentScreenWidth = window.screen.width;
-        const currentScreenHeight = window.screen.height;
+        // Get current window dimensions
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
         
-        // Calculate the current ratio of window size to screen size
-        const currentRatio = (currentWidth / currentScreenWidth) * (currentHeight / currentScreenHeight);
+        // Calculate aspect ratios
+        const screenAspectRatio = screenWidth / screenHeight;
+        const windowAspectRatio = windowWidth / windowHeight;
         
-        // Calculate the difference between current and stored dimensions
-        const widthDiff = Math.abs(currentWidth - storedDimensions.width) / storedDimensions.width;
-        const heightDiff = Math.abs(currentHeight - storedDimensions.height) / storedDimensions.height;
-        const ratioDiff = Math.abs(currentRatio - storedDimensions.ratio) / storedDimensions.ratio;
+        // Calculate the difference between aspect ratios
+        const aspectRatioDiff = Math.abs(screenAspectRatio - windowAspectRatio);
         
-        console.log('Dimension check:', { 
-            widthDiff, 
-            heightDiff, 
-            ratioDiff,
-            currentRatio,
-            storedRatio: storedDimensions.ratio
+        // Calculate area utilization (should be close to 1.0 in true full-screen)
+        const areaUtilization = (windowWidth * windowHeight) / (screenWidth * screenHeight);
+        
+        console.log('Full-screen check:', { 
+            screenAspectRatio,
+            windowAspectRatio,
+            aspectRatioDiff,
+            areaUtilization,
+            windowWidth,
+            windowHeight,
+            screenWidth,
+            screenHeight
         });
         
-        // If dimensions have changed significantly, it might be split-screen or floating window
-        // Using a threshold of 5% change to account for minor UI adjustments
-        const THRESHOLD = 0.05;
+        // In true full-screen, area utilization should be > 0.9 (90%)
+        // and aspect ratio difference should be minimal
+        const ASPECT_RATIO_THRESHOLD = 0.1; // 10% difference in aspect ratio
+        const AREA_UTILIZATION_THRESHOLD = 0.9; // 90% of screen area should be used
         
-        if (widthDiff > THRESHOLD || heightDiff > THRESHOLD || ratioDiff > THRESHOLD) {
+        // Check if the browser reports we're still in full-screen mode
+        const isInFullScreen = 
+            document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement;
+        
+        // Detect split-screen or floating window
+        if (aspectRatioDiff > ASPECT_RATIO_THRESHOLD || areaUtilization < AREA_UTILIZATION_THRESHOLD) {
             console.log('Detected possible split-screen or floating window');
-            
-            // Check if the browser reports we're still in full-screen mode
-            const isInFullScreen = 
-                document.fullscreenElement ||
-                document.webkitFullscreenElement ||
-                document.mozFullScreenElement ||
-                document.msFullscreenElement;
             
             // If browser thinks we're in full-screen but dimensions don't match, it's likely split-screen
             if (isInFullScreen) {
-                console.log('Browser reports full-screen but dimensions changed - likely split-screen');
+                console.log('Browser reports full-screen but dimensions don\'t match - likely split-screen');
                 handleSplitScreenDetected();
             } else {
                 // If browser also reports not in full-screen, handle as a regular exit
@@ -460,7 +561,7 @@ const StudentDashboard = () => {
                         violationType: 'fullscreen-exit'
                     });
                 }
-            }, 5000); // 30 seconds
+            }, 5000); // 5 seconds
             setFullScreenExitTimeout(timeout);
         }
     };
@@ -525,8 +626,9 @@ const StudentDashboard = () => {
             return;
         }
 
-        // Check if in full-screen mode
-        if (!isFullScreen) {
+        // Check if in full-screen mode (except for iOS devices)
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (!isFullScreen && !isIOS) {
             setError('You must be in full-screen mode to mark attendance. Please click the "Enter Full Screen" button.');
             return;
         }
@@ -661,7 +763,7 @@ const StudentDashboard = () => {
 
                 {sessionActive && (
                     <div className="mobile-container">
-                        {!isFullScreen && (
+                        {!isFullScreen && !isIOS && (
                             <div className="fullscreen-prompt">
                                 <p>You must be in full-screen mode to mark attendance.</p>
                                 <button 
