@@ -340,7 +340,7 @@ const StudentDashboard = () => {
                         device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "pc" 
                     });
                 }
-            }, 30000); // 30 seconds
+            }, 5000); // 30 seconds
             setFullScreenExitTimeout(timeout);
         }
     };
