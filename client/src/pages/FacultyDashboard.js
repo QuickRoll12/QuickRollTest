@@ -597,6 +597,7 @@ const FacultyDashboard = () => {
                                                 borderRadius: '10px',
                                                 margin: '2px',
                                                 display: 'flex',
+                                                fontSize : '31px',
                                                 flexDirection: 'column',
                                                 justifyContent: 'center',
                                                 alignItems: 'center',
@@ -609,10 +610,11 @@ const FacultyDashboard = () => {
                                             {cell.used && cell.photoFilename && (
                                                 <div style={{
                                                     width: '100%',
-                                                    height: '60px',
-                                                    marginBottom: '5px',
-                                                    overflow: 'hidden',
-                                                    borderRadius: '5px'
+                                                    height: '100%',
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    left: 0,
+                                                    zIndex: 1
                                                 }}>
                                                     <img 
                                                         src={cell.cloudinaryUrl || `${BACKEND_URL}/api/photo-verification/${cell.photoFilename}`}
