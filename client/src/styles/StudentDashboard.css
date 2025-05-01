@@ -576,7 +576,7 @@ h1 {
     width: 100%;
     padding: 12px;
     font-size: 16px;
-    border: 1px solid #ddd;
+    border: 1px solid #000000;
     border-radius: 4px;
     box-sizing: border-box;
     text-align: center;
@@ -595,7 +595,7 @@ h1 {
     font-size: 18px;
     font-weight: bold;
     transition: background-color 0.3s;
-    height: 60px;
+    height: 55px;
     text-transform: uppercase;
     letter-spacing: 1px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
