@@ -585,6 +585,7 @@ h1 {
 
 .mark-attendance-button {
     width: 100%;
+    margin: 0 auto;
     background-color: #4CAF50;
     color: white;
     border: none;
@@ -594,7 +595,7 @@ h1 {
     font-size: 18px;
     font-weight: bold;
     transition: background-color 0.3s;
-    height: 55px;
+    height: 60px;
     text-transform: uppercase;
     letter-spacing: 1px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
