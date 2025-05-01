@@ -818,7 +818,7 @@ const StudentDashboard = () => {
                                     type="text"
                                     value={code}
                                     onChange={(e) => setCode(e.target.value.toUpperCase())}
-                                    placeholder="Enter Attendance Code"
+                                    placeholder="Code"
                                     className="code-input"
                                     maxLength={4}
                                 />
