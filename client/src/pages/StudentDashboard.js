@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import io from "socket.io-client";
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import getWebRTCIPs from '../utils/webRTCDetector';
+import CameraCapture from '../components/CameraCapture';
 import '../styles/StudentDashboard.css';
 import '../styles/FullScreenWarning.css';
 
@@ -33,6 +34,11 @@ const StudentDashboard = () => {
     const fullScreenDimensionsRef = useRef({ width: 0, height: 0 });
     const dimensionCheckIntervalRef = useRef(null);
     const [isIOS, setIsIOS] = useState(false);
+    // Photo verification states
+    const [showCamera, setShowCamera] = useState(false);
+    const [photoFilename, setPhotoFilename] = useState(null);
+    const [photoVerificationRequired, setPhotoVerificationRequired] = useState(true);
+    const [photoUploading, setPhotoUploading] = useState(false);
 
     // Initialize fingerprint and WebRTC IPs
     useEffect(() => {
@@ -112,6 +118,11 @@ const StudentDashboard = () => {
                     setSessionType(status.sessionType);
                 }
                 
+                // Check if photo verification is required
+                if (status.photoVerificationRequired !== undefined) {
+                    setPhotoVerificationRequired(status.photoVerificationRequired);
+                }
+                
                 // If session is active and we haven't requested fullscreen yet, request it
                 if (status.active && !fullScreenRequestedRef.current) {
                     requestFullScreen();
@@ -166,6 +177,9 @@ const StudentDashboard = () => {
                 setTimeout(() => {
                     setSessionStats(null);
                 }, 60000); // Clear stats after 1 minute
+                
+                // Reset photo verification state when session ends
+                setPhotoFilename(null);
             }
         };
 
@@ -185,6 +199,18 @@ const StudentDashboard = () => {
             }
         };
 
+        const handlePhotoUploadResponse = (response) => {
+            setPhotoUploading(false);
+            if (response.success) {
+                setPhotoFilename(response.photoInfo.filename);
+                setMessage('Photo uploaded successfully! Now you can mark your attendance.');
+                setError('');
+            } else {
+                setError(response.message || 'Failed to upload photo');
+                setPhotoFilename(null);
+            }
+        };
+
         const handleFullScreenViolationResponse = (response) => {
             if (response.success) {
                 setMessage('');
@@ -199,6 +225,7 @@ const StudentDashboard = () => {
         socket.on('sessionEnded', handleSessionEnded);
         socket.on('error', handleError);
         socket.on('attendanceResponse', handleAttendanceResponse);
+        socket.on('photoUploadResponse', handlePhotoUploadResponse);
         socket.on('fullScreenViolationResponse', handleFullScreenViolationResponse);
 
         // Check current session status when mounting or changing semester
@@ -216,6 +243,7 @@ const StudentDashboard = () => {
             socket.off('sessionEnded', handleSessionEnded);
             socket.off('error', handleError);
             socket.off('attendanceResponse', handleAttendanceResponse);
+            socket.off('photoUploadResponse', handlePhotoUploadResponse);
             socket.off('fullScreenViolationResponse', handleFullScreenViolationResponse);
         };
     }, [socket, selectedSemester, user]);
@@ -577,53 +605,61 @@ const StudentDashboard = () => {
         }
     };
 
+    // Handle photo capture
+    const handlePhotoCapture = async (photoData) => {
+        if (!socket || !user || !sessionActive) return;
+        
+        try {
+            setPhotoUploading(true);
+            
+            // Upload photo via socket
+            socket.emit('uploadAttendancePhoto', {
+                department: user.course,
+                semester: selectedSemester,
+                section: user.section,
+                photoData
+            });
+            
+            // Response will be handled by the photoUploadResponse event handler
+        } catch (error) {
+            console.error('Error uploading photo:', error);
+            setError('Failed to upload photo: ' + (error.message || 'Unknown error'));
+            setPhotoUploading(false);
+        }
+    };
+    
+    // Handle attendance marking
     const markAttendance = () => {
+        if (!socket || !sessionActive) return;
+        
+        // Check if photo verification is required but no photo has been taken
+        if (photoVerificationRequired && !photoFilename) {
+            setShowCamera(true);
+            return;
+        }
+        
         if (!code) {
             setError('Please enter the attendance code');
             return;
         }
-
-        if (!socket) {
-            setError('Not connected to server');
-            return;
-        }
-
-        if (!fingerprint || !webRTCIPs) {
-            setError('Device identification not ready. Please wait a few seconds and try again.');
-            return;
-        }
-
-        // No need to check for full-screen mode as we're bypassing it for all devices
-        // The security checks are still active through the visibility and tab switching detection
-
-        // For roll-based sessions, validate roll number
-        if (sessionType === 'roll' && (!user.classRollNumber || !/^\d{2}$/.test(user.classRollNumber))) {
-            setError('Invalid roll number format in your profile');
-            return;
-        }
         
-        // For Gmail-based sessions, validate email
-        if (sessionType === 'gmail' && !user.email) {
-            setError('Email is required for Gmail-based attendance');
-            return;
-        }
-
-        console.log('Marking attendance with WebRTC IPs:', webRTCIPs);
-        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        // Get the roll number from user data
+        const rollNumber = user.classRollNumber;
+        
+        // Emit the attendance event with photo information
         socket.emit('markAttendance', {
             department: user.course,
             semester: selectedSemester,
             section: user.section,
-            rollNumber: sessionType === 'roll' ? user.classRollNumber : null,
-            gmail: sessionType === 'gmail' ? user.email : null,
             code,
+            rollNumber,
+            gmail: user.email,
             fingerprint,
             webRTCIPs,
-            token: localStorage.getItem("token"), // sending token for verification
-            device: isMobile ? "mobile" : "pc" 
+            photoFilename
         });
-
-        // Clear code input after submission
+        
+        // Clear the code input
         setCode('');
     };
 
@@ -747,35 +783,54 @@ const StudentDashboard = () => {
                             </div>
                         </div>
 
-                        <div className="form-container">
-                            <h3 className="subtitle">Mark Attendance</h3>
-                            <div className="form-group">
-                                <label className="label">{sessionType === 'gmail' ? 'Email:' : 'Roll Number:'}</label>
-                                <input
-                                    type="text"
-                                    value={sessionType === 'gmail' ? user.email : user.classRollNumber}
-                                    className="input"
-                                    disabled={true}
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label className="label">Attendance Code:</label>
+                        <div className="attendance-form">
+                            <h2>Mark Your Attendance</h2>
+                            
+                            {photoVerificationRequired && (
+                                <div className="photo-verification-status">
+                                    {photoFilename ? (
+                                        <div className="photo-verified">
+                                            <span className="checkmark">✓</span> Photo verification complete
+                                        </div>
+                                    ) : (
+                                        <div className="photo-required">
+                                            <button 
+                                                className="take-photo-btn"
+                                                onClick={() => setShowCamera(true)}
+                                            >
+                                                Take Photo for Verification
+                                            </button>
+                                            <p className="photo-info">
+                                                You must take a photo before marking attendance
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            
+                            <div className="code-input-container">
                                 <input
                                     type="text"
                                     value={code}
-                                    onChange={(e) => setCode(e.target.value)}
-                                    className="input"
-                                    placeholder="Enter attendance code"
+                                    onChange={(e) => setCode(e.target.value.toUpperCase())}
+                                    placeholder="Enter Attendance Code"
+                                    className="code-input"
+                                    maxLength={4}
                                 />
+                                <button 
+                                    onClick={markAttendance}
+                                    className="mark-btn"
+                                    disabled={photoVerificationRequired && !photoFilename}
+                                >
+                                    Mark Attendance
+                                </button>
                             </div>
-
-                            <button 
-                                onClick={markAttendance}
-                                className="mark-button"
-                            >
-                                Mark Attendance
-                            </button>
+                            
+                            {photoVerificationRequired && !photoFilename && (
+                                <div className="photo-warning">
+                                    Photo verification is required for this session
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -833,7 +888,8 @@ const StudentDashboard = () => {
                 {(error || message) && (
                     <div className="message-container">
                         {error && <div className="error-text">{error}</div>}
-                        {message && <div className="success-text">{message}</div>}
+                        {message && <div className="success-text">{message}</div>
+                        }
                     </div>
                 )}
                 
@@ -865,6 +921,17 @@ const StudentDashboard = () => {
                             </div>
                         </div>
                     </div>
+                )}
+                
+                {/* Camera Capture */}
+                {showCamera && (
+                    <CameraCapture 
+                        onClose={() => setShowCamera(false)}
+                        onPhotoCapture={handlePhotoCapture}
+                        department={user?.course}
+                        semester={selectedSemester}
+                        section={user?.section}
+                    />
                 )}
             </div>
         );

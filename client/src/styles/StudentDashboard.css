@@ -478,3 +478,135 @@ h1 {
         font-size: 14px;
     }
 }
+
+/* Photo Verification Styles */
+.photo-verification-status {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+}
+
+.photo-verified {
+    display: flex;
+    align-items: center;
+    color: #4caf50;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.checkmark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background-color: #4caf50;
+    color: white;
+    border-radius: 50%;
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+.photo-required {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.take-photo-btn {
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 10px;
+}
+
+.take-photo-btn:hover {
+    background-color: #1976d2;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.photo-info {
+    color: #666;
+    font-size: 14px;
+    text-align: center;
+    margin: 5px 0;
+}
+
+.photo-warning {
+    color: #ff6f61;
+    font-size: 14px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.attendance-form {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+.attendance-form h2 {
+    color: #333;
+    font-size: 22px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.code-input-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.code-input {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-align: center;
+}
+
+.code-input:focus {
+    border-color: #2196f3;
+    outline: none;
+}
+
+.mark-btn {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0 20px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mark-btn:hover:not(:disabled) {
+    background-color: #388e3c;
+    transform: translateY(-2px);
+}
+
+.mark-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+/* Make sure the camera component is on top of everything */
+.camera-container {
+    z-index: 1100;
+}

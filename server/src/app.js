@@ -15,7 +15,9 @@ const facultyRoutes = require('./routes/facultyRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const sheetMappingRoutes = require('./routes/sheetMappingRoutes');
 const attendanceRecordRoutes = require('./routes/attendanceRecordRoutes');
+const photoVerificationRoutes = require('./routes/photoVerificationRoutes');
 const path = require('path');
+const photoVerificationService = require('./services/photoVerificationService'); // Import photoVerificationService
 
 const app = express();
 const server = http.createServer(app);
@@ -81,6 +83,9 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, '../public')));
 
+// Serve the temp-photos directory for photo access
+app.use('/temp-photos', express.static(path.join(__dirname, '../temp-photos')));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
@@ -88,7 +93,7 @@ app.use('/api', facultyRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/sheet-mappings', sheetMappingRoutes);
 app.use('/api/attendance', attendanceRecordRoutes);
-
+app.use('/api/photo-verification', photoVerificationRoutes);
 
 // MongoDB connection with proper options
 mongoose.connect(process.env.MONGODB_URI, {
@@ -155,11 +160,63 @@ io.on('connection', (socket) => {
                 department: status.department,
                 semester: status.semester,
                 section: status.section,
-                totalStudents: status.totalStudents
+                totalStudents: status.totalStudents,
+                photoVerificationRequired: true // Always require photo verification
             });
         } catch (error) {
             console.error('Error getting session status:', error.message);
             socket.emit('error', { message: error.message });
+        }
+    });
+
+    // New event for photo upload
+    socket.on('uploadAttendancePhoto', async ({ department, semester, section, photoData }) => {
+        console.log(`📸 Photo upload attempt - Department: ${department}, Semester: ${semester}, Section: ${section}`);
+        
+        try {
+            // Only students can upload photos
+            if (socket.user.role !== 'student') {
+                throw new Error('Only students can upload attendance photos');
+            }
+            
+            // Verify that the department and section match the user's data
+            if (department !== socket.user.course) {
+                throw new Error('Department does not match your profile');
+            }
+
+            if (section !== socket.user.section) {
+                throw new Error('Section does not match your profile');
+            }
+            
+            // Get student ID and roll number
+            const studentId = socket.user._id;
+            const rollNumber = socket.user.classRollNumber;
+            
+            // Save the photo
+            const photoInfo = await photoVerificationService.savePhoto(
+                photoData,
+                department,
+                semester,
+                section,
+                rollNumber || studentId
+            );
+            
+            // Send success response
+            socket.emit('photoUploadResponse', {
+                success: true,
+                message: 'Photo uploaded successfully',
+                photoInfo: {
+                    filename: photoInfo.filename,
+                    timestamp: photoInfo.timestamp
+                }
+            });
+            
+        } catch (error) {
+            console.error('Error uploading photo:', error.message);
+            socket.emit('photoUploadResponse', {
+                success: false,
+                message: error.message
+            });
         }
     });
 
@@ -194,7 +251,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('markAttendance', async ({department, semester, section, code, rollNumber, gmail, fingerprint, webRTCIPs }) => {
+    socket.on('markAttendance', async ({department, semester, section, code, rollNumber, gmail, fingerprint, webRTCIPs, photoFilename }) => {
         // Determine if this is a roll-based or Gmail-based attendance
         const sessionStatus = attendanceService.getSessionStatus(department, semester, section);
         const isGmailSession = sessionStatus.sessionType === 'gmail';
@@ -246,6 +303,11 @@ io.on('connection', (socket) => {
             if (section !== socket.user.section) {
                 throw new Error('Section does not match your profile');
             }
+            
+            // Check if photo verification is required and a photo was provided
+            if (sessionStatus.photoVerificationRequired && !photoFilename) {
+                throw new Error('Photo verification is required for this session');
+            }
 
             const result = await attendanceService.markAttendance(
                 department,
@@ -261,12 +323,14 @@ io.on('connection', (socket) => {
                     userName: socket.user.name,
                     userAgent: socket.handshake.headers['user-agent'] || 'Unknown'
                 },
-                gmail // Pass the gmail parameter explicitly
+                gmail, // Pass the gmail parameter explicitly
+                photoFilename // Pass the photo filename
             );
             
             socket.emit('attendanceResponse', {
                 success: result.success,
-                message: result.message
+                message: result.message,
+                photoVerified: !!photoFilename
             });
 
             if (result.success) {
@@ -297,6 +361,19 @@ io.on('connection', (socket) => {
             }
 
             const result = await attendanceService.endSession(department, semester, section);
+            
+            // Clean up temporary photos for this session
+            try {
+                const deletedCount = await photoVerificationService.deleteSessionPhotos(
+                    department,
+                    semester,
+                    section
+                );
+                console.log(`Cleaned up ${deletedCount} photos for session ${department}-${semester}-${section}`);
+            } catch (photoError) {
+                console.error('Error cleaning up session photos:', photoError);
+                // Continue with session end even if photo cleanup fails
+            }
             
             // If this was a Gmail-based session, update the Google Sheet
             if (result.sessionType === 'gmail') {

@@ -9,6 +9,7 @@ const reportService = require('./reportService');
 const reportEmailService = require('./reportEmailService');
 const User = require('../models/User');
 const attendanceRecordService = require('./attendanceRecordService');
+const photoVerificationService = require('./photoVerificationService');
 
 class AttendanceService {
     constructor() {
@@ -154,7 +155,7 @@ class AttendanceService {
         };
     }
 
-    async markAttendance(department, semester, section, rollNumber, code, fingerprint, webRTCIPs, userId, req, gmail = null) {
+    async markAttendance(department, semester, section, rollNumber, code, fingerprint, webRTCIPs, userId, req, gmail = null, photoFilename = null) {
         const startTime = Date.now();
         console.log(`[${new Date().toISOString()}] - Attendance marking started`);
     
@@ -325,6 +326,15 @@ class AttendanceService {
         sessionData.grid[row][col].studentRoll = user.classRollNumber;
         sessionData.grid[row][col].studentEmail = user.email;
         sessionData.grid[row][col].photo_url = user.photo_url || '/default-student.png';
+        
+        // Verify the photo
+        if (photoFilename) {
+            const verificationResult = await photoVerificationService.verifyPhoto(photoFilename, user.photo_url);
+            if (!verificationResult.verified) {
+                sessionData.grid[row][col].used = false;
+                throw new Error('Photo verification failed');
+            }
+        }
         
         await Proxy.create({ 
             fingerprint, 

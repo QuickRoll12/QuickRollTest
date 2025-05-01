@@ -597,36 +597,50 @@ const FacultyDashboard = () => {
                                                 borderRadius: '10px',
                                                 margin: '2px',
                                                 display: 'flex',
+                                                flexDirection: 'column',
                                                 justifyContent: 'center',
                                                 alignItems: 'center',
-                                                fontWeight: 'bold',
-                                                fontSize: '31px',
-                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                                transition: 'transform 0.2s, box-shadow 0.2s',
-                                                cursor: 'pointer',
-                                                overflow: 'hidden',
-                                                backgroundColor: cell.used ? '#66bb6a' : '#ffffff',
-                                                color: cell.used ? '#ffffff' : '#000000',
-                                                padding: cell.used ? '0' : '10px',
+                                                backgroundColor: cell.used ? '#4caf50' : '#f5f5f5',
+                                                color: cell.used ? 'white' : '#333',
+                                                position: 'relative',
+                                                overflow: 'hidden'
                                             }}
                                         >
-                                            {cell.used ? (
-                                                <img 
-                                                    src={cell.photo_url || '/default-student.png'} 
-                                                    alt={cell.studentName || 'Student'}
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        objectFit: 'cover',
-                                                        display: 'block',
-                                                    }}
-                                                    onError={(e) => {
-                                                        e.target.onerror = null;
-                                                        e.target.src = '/default-student.png';
-                                                    }}
-                                                />
-                                            ) : (
-                                                cell.code
+                                            {cell.used && cell.photoFilename && (
+                                                <div style={{
+                                                    width: '100%',
+                                                    height: '60px',
+                                                    marginBottom: '5px',
+                                                    overflow: 'hidden',
+                                                    borderRadius: '5px'
+                                                }}>
+                                                    <img 
+                                                        src={`${BACKEND_URL}/api/photo-verification/${cell.photoFilename}`}
+                                                        alt="Student"
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: 'cover'
+                                                        }}
+                                                        onError={(e) => {
+                                                            e.target.onerror = null;
+                                                            e.target.src = 'https://via.placeholder.com/60?text=No+Photo';
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
+                                            <div style={{ fontSize: '12px', fontWeight: 'bold' }}>
+                                                {cell.code}
+                                            </div>
+                                            {cell.used && (
+                                                <div style={{ 
+                                                    fontSize: '10px', 
+                                                    marginTop: '2px',
+                                                    color: cell.photoFilename ? 'white' : '#ffeb3b',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    {cell.photoFilename ? 'Verified' : 'No Photo'}
+                                                </div>
                                             )}
                                         </div>
                                     ))}

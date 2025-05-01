@@ -57,7 +57,23 @@ const attendanceRecordSchema = new mongoose.Schema({
   sessionType: { 
     type: String, 
     enum: ['roll', 'gmail'] 
-  }
+  },
+  // Photo verification fields
+  photoVerificationRequired: {
+    type: Boolean,
+    default: true
+  },
+  studentPhotos: [{
+    studentId: String,
+    rollNumber: String,
+    photoFilename: String,
+    photoTimestamp: Date,
+    verificationStatus: {
+      type: String,
+      enum: ['pending', 'verified', 'rejected'],
+      default: 'pending'
+    }
+  }]
 }, {
   timestamps: true
 });
