@@ -824,7 +824,7 @@ const StudentDashboard = () => {
                                 />
                                 <button 
                                     onClick={markAttendance}
-                                    className="mark-btn"
+                                    className="mark-attendance-button"
                                     disabled={photoVerificationRequired && !photoFilename}
                                 >
                                     Mark Attendance
