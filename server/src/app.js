@@ -366,6 +366,7 @@ io.on('connection', (socket) => {
             
             // Clean up temporary photos for this session
             try {
+                console.log(`Starting photo cleanup for session ${department}-${semester}-${section}`);
                 const deletedCount = await photoVerificationService.deleteSessionPhotos(
                     department,
                     semester,
@@ -373,7 +374,7 @@ io.on('connection', (socket) => {
                 );
                 console.log(`Cleaned up ${deletedCount} photos for session ${department}-${semester}-${section}`);
             } catch (photoError) {
-                console.error('Error cleaning up session photos:', photoError);
+                console.error('Error cleaning up session photos:', photoError.message);
                 // Continue with session end even if photo cleanup fails
             }
             

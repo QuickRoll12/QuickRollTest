@@ -583,32 +583,32 @@ h1 {
     letter-spacing: 1px;
 }
 
-.mark-attendance-container {
+.mark-attendance-button {
     width: 100%;
-    margin-top: 10px;
-}
-
-.mark-btn {
-    background-color: #4caf50;
+    background-color: #4CAF50;
     color: white;
     border: none;
-    height: 10px;
-    border-radius: 8px;
-    padding: 0 20px;
-    font-size: 16px;
-    font-weight: 600;
+    border-radius: 6px;
+    padding: 15px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    font-size: 18px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+    height: 55px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.mark-btn:hover:not(:disabled) {
-    background-color: #388e3c;
-    transform: translateY(-2px);
+.mark-attendance-button:hover {
+    background-color: #45a049;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.mark-btn:disabled {
+.mark-attendance-button:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
+    box-shadow: none;
 }
 
 /* Make sure the camera component is on top of everything */

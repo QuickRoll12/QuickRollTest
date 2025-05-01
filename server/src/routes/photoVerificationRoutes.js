@@ -160,4 +160,32 @@ router.delete('/session', auth, async (req, res) => {
   }
 });
 
+// Add a route to manually clean up session photos
+router.delete('/cleanup/:department/:semester/:section', auth, async (req, res) => {
+    try {
+        // Only faculty can trigger manual cleanup
+        if (req.user.role !== 'faculty') {
+            return res.status(403).json({ success: false, message: 'Only faculty members can clean up session photos' });
+        }
+        
+        const { department, semester, section } = req.params;
+        
+        console.log(`Manual cleanup requested for ${department}-${semester}-${section}`);
+        
+        const deletedCount = await photoVerificationService.deleteSessionPhotos(
+            department,
+            semester,
+            section
+        );
+        
+        return res.json({ 
+            success: true, 
+            message: `Successfully cleaned up ${deletedCount} photos for session ${department}-${semester}-${section}` 
+        });
+    } catch (error) {
+        console.error('Error in manual photo cleanup:', error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 module.exports = router;

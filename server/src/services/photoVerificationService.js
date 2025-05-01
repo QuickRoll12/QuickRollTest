@@ -200,19 +200,24 @@ const deletePhoto = async (identifier) => {
 const deleteSessionPhotos = async (department, semester, section) => {
   try {
     const sessionPrefix = `${department}_${semester}_${section}_`;
+    console.log(`Attempting to delete photos with prefix: ${sessionPrefix}`);
     
     // Delete from Cloudinary
     let deletedCount = 0;
     
     try {
-      // Search for resources in the folder with the session prefix
-      const result = await cloudinary.search
-        .expression(`folder:${CLOUDINARY_FOLDER} AND public_id:${sessionPrefix}*`)
-        .max_results(500)
-        .execute();
+      // First, get all resources in the folder
+      const result = await cloudinary.api.resources({
+        type: 'upload',
+        prefix: `${CLOUDINARY_FOLDER}/${sessionPrefix}`,
+        max_results: 500
+      });
+      
+      console.log(`Found ${result.resources.length} photos in Cloudinary for session ${department}-${semester}-${section}`);
       
       // Delete each resource
       for (const resource of result.resources) {
+        console.log(`Deleting Cloudinary resource: ${resource.public_id}`);
         await cloudinary.uploader.destroy(resource.public_id);
         deletedCount++;
       }
@@ -225,13 +230,18 @@ const deleteSessionPhotos = async (department, semester, section) => {
     // Also clean up local storage as fallback
     try {
       const files = await readdirAsync(PHOTO_STORAGE_PATH);
+      let localDeletedCount = 0;
       
       for (const file of files) {
         if (file.startsWith(sessionPrefix)) {
-          await deletePhoto(file);
-          deletedCount++;
+          const filePath = path.join(PHOTO_STORAGE_PATH, file);
+          await unlinkAsync(filePath);
+          localDeletedCount++;
         }
       }
+      
+      console.log(`Deleted ${localDeletedCount} photos from local storage for session ${department}-${semester}-${section}`);
+      deletedCount += localDeletedCount;
     } catch (localError) {
       console.error('Error deleting session photos from local storage:', localError);
     }
