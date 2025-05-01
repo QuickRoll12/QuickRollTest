@@ -37,6 +37,7 @@ const StudentDashboard = () => {
     // Photo verification states
     const [showCamera, setShowCamera] = useState(false);
     const [photoFilename, setPhotoFilename] = useState(null);
+    const [photoCloudinaryUrl, setPhotoCloudinaryUrl] = useState(null);
     const [photoVerificationRequired, setPhotoVerificationRequired] = useState(true);
     const [photoUploading, setPhotoUploading] = useState(false);
 
@@ -180,6 +181,7 @@ const StudentDashboard = () => {
                 
                 // Reset photo verification state when session ends
                 setPhotoFilename(null);
+                setPhotoCloudinaryUrl(null);
             }
         };
 
@@ -203,11 +205,13 @@ const StudentDashboard = () => {
             setPhotoUploading(false);
             if (response.success) {
                 setPhotoFilename(response.photoInfo.filename);
+                setPhotoCloudinaryUrl(response.photoInfo.cloudinaryUrl);
                 setMessage('Photo uploaded successfully! Now you can mark your attendance.');
                 setError('');
             } else {
                 setError(response.message || 'Failed to upload photo');
                 setPhotoFilename(null);
+                setPhotoCloudinaryUrl(null);
             }
         };
 
@@ -656,7 +660,8 @@ const StudentDashboard = () => {
             gmail: user.email,
             fingerprint,
             webRTCIPs,
-            photoFilename
+            photoFilename,
+            photoCloudinaryUrl
         });
         
         // Clear the code input

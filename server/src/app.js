@@ -207,6 +207,7 @@ io.on('connection', (socket) => {
                 message: 'Photo uploaded successfully',
                 photoInfo: {
                     filename: photoInfo.filename,
+                    cloudinaryUrl: photoInfo.cloudinaryUrl,
                     timestamp: photoInfo.timestamp
                 }
             });
@@ -251,15 +252,15 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('markAttendance', async ({department, semester, section, code, rollNumber, gmail, fingerprint, webRTCIPs, photoFilename }) => {
+    socket.on('markAttendance', async (data) => {
         // Determine if this is a roll-based or Gmail-based attendance
-        const sessionStatus = attendanceService.getSessionStatus(department, semester, section);
+        const sessionStatus = attendanceService.getSessionStatus(data.department, data.semester, data.section);
         const isGmailSession = sessionStatus.sessionType === 'gmail';
         
         if (isGmailSession) {
-            console.log(`📝 Gmail attendance mark attempt - Department: ${department}, Semester: ${semester}, Section: ${section}, Gmail: ${gmail}`);
+            console.log(`📝 Gmail attendance mark attempt - Department: ${data.department}, Semester: ${data.semester}, Section: ${data.section}, Gmail: ${data.gmail}`);
         } else {
-            console.log(`📝 Roll attendance mark attempt - Department: ${department}, Semester: ${semester}, Section: ${section}, Roll: ${rollNumber}`);
+            console.log(`📝 Roll attendance mark attempt - Department: ${data.department}, Semester: ${data.semester}, Section: ${data.section}, Roll: ${data.rollNumber}`);
         }
         
         // Get client IP address - try different socket properties for IP
@@ -282,11 +283,12 @@ io.on('connection', (socket) => {
             }
 
             // For roll-based sessions, verify roll number
-            if (!isGmailSession && rollNumber !== socket.user.classRollNumber) {
+            if (!isGmailSession && data.rollNumber !== socket.user.classRollNumber) {
                 throw new Error('Roll number does not match your profile');
             }
             
             // For Gmail-based sessions, use the user's email from their profile if not provided
+            let gmail = data.gmail;
             if (isGmailSession) {
                 if (!gmail || gmail.trim() === '') {
                     // If no email provided, use the one from the user's profile
@@ -296,27 +298,27 @@ io.on('connection', (socket) => {
             }
 
             // Verify that the department and section match the user's data
-            if (department !== socket.user.course) {
+            if (data.department !== socket.user.course) {
                 throw new Error('Department does not match your profile');
             }
 
-            if (section !== socket.user.section) {
+            if (data.section !== socket.user.section) {
                 throw new Error('Section does not match your profile');
             }
             
             // Check if photo verification is required and a photo was provided
-            if (sessionStatus.photoVerificationRequired && !photoFilename) {
+            if (sessionStatus.photoVerificationRequired && !data.photoFilename) {
                 throw new Error('Photo verification is required for this session');
             }
 
             const result = await attendanceService.markAttendance(
-                department,
-                semester,
-                section,
-                rollNumber,
-                code,
-                fingerprint,
-                webRTCIPs,
+                data.department,
+                data.semester,
+                data.section,
+                data.rollNumber,
+                data.code,
+                data.fingerprint,
+                data.webRTCIPs,
                 socket.user._id,
                 { 
                     ip: ipAddress,
@@ -324,22 +326,22 @@ io.on('connection', (socket) => {
                     userAgent: socket.handshake.headers['user-agent'] || 'Unknown'
                 },
                 gmail, // Pass the gmail parameter explicitly
-                photoFilename // Pass the photo filename
+                data.photoFilename, // Pass the photo filename
+                data.photoCloudinaryUrl // Pass the Cloudinary URL
             );
             
             socket.emit('attendanceResponse', {
                 success: result.success,
                 message: result.message,
-                photoVerified: !!photoFilename
+                photoVerified: !!data.photoFilename
             });
 
             if (result.success) {
-                // Notify all clients in this session about the grid update
                 io.emit('updateGrid', {
                     grid: result.grid,
-                    department,
-                    semester,
-                    section
+                    department: data.department,
+                    semester: data.semester,
+                    section: data.section
                 });
             }
         } catch (error) {

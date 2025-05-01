@@ -3,6 +3,7 @@ const path = require('path');
 const crypto = require('crypto');
 const sharp = require('sharp');
 const { promisify } = require('util');
+const { cloudinary } = require('../config/cloudinary');
 const mkdirAsync = promisify(fs.mkdir);
 const unlinkAsync = promisify(fs.unlink);
 const readdirAsync = promisify(fs.readdir);
@@ -12,8 +13,9 @@ const statAsync = promisify(fs.stat);
 const PHOTO_STORAGE_PATH = process.env.PHOTO_STORAGE_PATH || path.join(__dirname, '../../temp-photos');
 const PHOTO_RETENTION_HOURS = process.env.PHOTO_RETENTION_HOURS || 24; // Default 24 hours
 const MAX_PHOTO_SIZE_KB = process.env.MAX_PHOTO_SIZE_KB || 500; // Default 500KB after compression
+const CLOUDINARY_FOLDER = 'attendance-photos';
 
-// Ensure the storage directory exists
+// Ensure the storage directory exists (for fallback)
 const initializeStorage = async () => {
   try {
     if (!fs.existsSync(PHOTO_STORAGE_PATH)) {
@@ -31,13 +33,11 @@ const initializeStorage = async () => {
 const generatePhotoFilename = (department, semester, section, studentId) => {
   const timestamp = Date.now();
   const randomString = crypto.randomBytes(4).toString('hex');
-  return `${department}_${semester}_${section}_${studentId}_${timestamp}_${randomString}.jpg`;
+  return `${department}_${semester}_${section}_${studentId}_${timestamp}_${randomString}`;
 };
 
-// Process and save the photo
+// Process and save the photo to Cloudinary
 const savePhoto = async (photoData, department, semester, section, studentId) => {
-  await initializeStorage();
-  
   try {
     // Remove the data:image/jpeg;base64, part if present
     const base64Data = photoData.replace(/^data:image\/\w+;base64,/, '');
@@ -54,36 +54,107 @@ const savePhoto = async (photoData, department, semester, section, studentId) =>
       throw new Error(`Photo exceeds maximum size of ${MAX_PHOTO_SIZE_KB}KB after compression`);
     }
     
-    // Generate filename and save
+    // Generate unique filename
     const filename = generatePhotoFilename(department, semester, section, studentId);
-    const filePath = path.join(PHOTO_STORAGE_PATH, filename);
     
-    await fs.promises.writeFile(filePath, processedImageBuffer);
-    console.log(`Saved photo for student ${studentId} at ${filePath}`);
+    // Upload to Cloudinary
+    const uploadResult = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: CLOUDINARY_FOLDER,
+          public_id: filename,
+          resource_type: 'image',
+          overwrite: true,
+          invalidate: true
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      
+      uploadStream.end(processedImageBuffer);
+    });
+    
+    console.log(`Saved photo for student ${studentId} to Cloudinary with URL: ${uploadResult.secure_url}`);
     
     return {
-      filename,
-      filePath,
+      filename: filename,
+      cloudinaryId: uploadResult.public_id,
+      cloudinaryUrl: uploadResult.secure_url,
       timestamp: Date.now()
     };
   } catch (error) {
-    console.error('Error saving photo:', error);
-    throw new Error(`Failed to save photo: ${error.message}`);
+    console.error('Error saving photo to Cloudinary:', error);
+    
+    // Fallback to local storage if Cloudinary fails
+    try {
+      await initializeStorage();
+      const filename = generatePhotoFilename(department, semester, section, studentId) + '.jpg';
+      const filePath = path.join(PHOTO_STORAGE_PATH, filename);
+      
+      // Remove the data:image/jpeg;base64, part if present
+      const base64Data = photoData.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+      
+      // Process the image - resize and compress
+      const processedImageBuffer = await sharp(buffer)
+        .resize(640, 480, { fit: 'inside' })
+        .jpeg({ quality: 80 })
+        .toBuffer();
+      
+      await fs.promises.writeFile(filePath, processedImageBuffer);
+      console.log(`Fallback: Saved photo for student ${studentId} at ${filePath}`);
+      
+      return {
+        filename: filename,
+        filePath: filePath,
+        timestamp: Date.now(),
+        isLocalStorage: true
+      };
+    } catch (fallbackError) {
+      console.error('Fallback storage also failed:', fallbackError);
+      throw new Error(`Failed to save photo: ${error.message}`);
+    }
   }
 };
 
-// Get a photo by filename
-const getPhoto = async (filename) => {
+// Get a photo by filename/ID
+const getPhoto = async (identifier) => {
   try {
-    const filePath = path.join(PHOTO_STORAGE_PATH, filename);
-    if (!fs.existsSync(filePath)) {
-      throw new Error('Photo not found');
+    // Check if this is a Cloudinary ID
+    if (identifier.includes('/')) {
+      // This is a Cloudinary public_id
+      const result = await cloudinary.api.resource(identifier);
+      return {
+        cloudinaryUrl: result.secure_url,
+        data: null // No need to return data for Cloudinary URLs
+      };
     }
     
-    return {
-      filePath,
-      data: await fs.promises.readFile(filePath)
-    };
+    // Try to get from Cloudinary first
+    try {
+      const publicId = `${CLOUDINARY_FOLDER}/${identifier}`;
+      const result = await cloudinary.api.resource(publicId);
+      return {
+        cloudinaryUrl: result.secure_url,
+        data: null
+      };
+    } catch (cloudinaryError) {
+      console.log('Photo not found in Cloudinary, checking local storage');
+      
+      // Fallback to local storage
+      const filePath = path.join(PHOTO_STORAGE_PATH, identifier);
+      if (!fs.existsSync(filePath)) {
+        throw new Error('Photo not found in Cloudinary or local storage');
+      }
+      
+      return {
+        filePath,
+        data: await fs.promises.readFile(filePath),
+        isLocalStorage: true
+      };
+    }
   } catch (error) {
     console.error('Error retrieving photo:', error);
     throw new Error(`Failed to retrieve photo: ${error.message}`);
@@ -91,14 +162,33 @@ const getPhoto = async (filename) => {
 };
 
 // Delete a specific photo
-const deletePhoto = async (filename) => {
+const deletePhoto = async (identifier) => {
   try {
-    const filePath = path.join(PHOTO_STORAGE_PATH, filename);
-    if (fs.existsSync(filePath)) {
-      await unlinkAsync(filePath);
-      console.log(`Deleted photo: ${filename}`);
+    // Check if this is a Cloudinary ID
+    if (identifier.includes('/')) {
+      // Delete from Cloudinary
+      await cloudinary.uploader.destroy(identifier);
+      console.log(`Deleted photo from Cloudinary: ${identifier}`);
       return true;
     }
+    
+    // Try to delete from Cloudinary first
+    try {
+      const publicId = `${CLOUDINARY_FOLDER}/${identifier}`;
+      await cloudinary.uploader.destroy(publicId);
+      console.log(`Deleted photo from Cloudinary: ${publicId}`);
+    } catch (cloudinaryError) {
+      console.log(`Photo not found in Cloudinary or failed to delete: ${cloudinaryError.message}`);
+    }
+    
+    // Also check local storage
+    const filePath = path.join(PHOTO_STORAGE_PATH, identifier);
+    if (fs.existsSync(filePath)) {
+      await unlinkAsync(filePath);
+      console.log(`Deleted photo from local storage: ${identifier}`);
+      return true;
+    }
+    
     return false;
   } catch (error) {
     console.error('Error deleting photo:', error);
@@ -110,17 +200,42 @@ const deletePhoto = async (filename) => {
 const deleteSessionPhotos = async (department, semester, section) => {
   try {
     const sessionPrefix = `${department}_${semester}_${section}_`;
-    const files = await readdirAsync(PHOTO_STORAGE_PATH);
     
+    // Delete from Cloudinary
     let deletedCount = 0;
-    for (const file of files) {
-      if (file.startsWith(sessionPrefix)) {
-        await deletePhoto(file);
+    
+    try {
+      // Search for resources in the folder with the session prefix
+      const result = await cloudinary.search
+        .expression(`folder:${CLOUDINARY_FOLDER} AND public_id:${sessionPrefix}*`)
+        .max_results(500)
+        .execute();
+      
+      // Delete each resource
+      for (const resource of result.resources) {
+        await cloudinary.uploader.destroy(resource.public_id);
         deletedCount++;
       }
+      
+      console.log(`Deleted ${deletedCount} photos from Cloudinary for session ${department}-${semester}-${section}`);
+    } catch (cloudinaryError) {
+      console.error('Error deleting session photos from Cloudinary:', cloudinaryError);
     }
     
-    console.log(`Deleted ${deletedCount} photos for session ${department}-${semester}-${section}`);
+    // Also clean up local storage as fallback
+    try {
+      const files = await readdirAsync(PHOTO_STORAGE_PATH);
+      
+      for (const file of files) {
+        if (file.startsWith(sessionPrefix)) {
+          await deletePhoto(file);
+          deletedCount++;
+        }
+      }
+    } catch (localError) {
+      console.error('Error deleting session photos from local storage:', localError);
+    }
+    
     return deletedCount;
   } catch (error) {
     console.error('Error deleting session photos:', error);
@@ -131,23 +246,55 @@ const deleteSessionPhotos = async (department, semester, section) => {
 // Cleanup old photos based on retention policy
 const cleanupOldPhotos = async () => {
   try {
-    const files = await readdirAsync(PHOTO_STORAGE_PATH);
-    const now = Date.now();
-    const retentionMs = PHOTO_RETENTION_HOURS * 60 * 60 * 1000;
-    
     let deletedCount = 0;
-    for (const file of files) {
-      const filePath = path.join(PHOTO_STORAGE_PATH, file);
-      const stats = await statAsync(filePath);
-      const fileAge = now - stats.mtimeMs;
+    
+    // Clean up Cloudinary
+    try {
+      const retentionDate = new Date();
+      retentionDate.setHours(retentionDate.getHours() - PHOTO_RETENTION_HOURS);
       
-      if (fileAge > retentionMs) {
-        await unlinkAsync(filePath);
+      // Convert to Unix timestamp (seconds)
+      const timestamp = Math.floor(retentionDate.getTime() / 1000);
+      
+      // Search for resources older than retention period
+      const result = await cloudinary.search
+        .expression(`folder:${CLOUDINARY_FOLDER} AND uploaded_at<${timestamp}`)
+        .max_results(500)
+        .execute();
+      
+      // Delete each resource
+      for (const resource of result.resources) {
+        await cloudinary.uploader.destroy(resource.public_id);
         deletedCount++;
       }
+      
+      console.log(`Cleanup: Deleted ${deletedCount} old photos from Cloudinary`);
+    } catch (cloudinaryError) {
+      console.error('Error cleaning up old photos from Cloudinary:', cloudinaryError);
     }
     
-    console.log(`Cleanup: Deleted ${deletedCount} old photos`);
+    // Also clean up local storage
+    try {
+      const files = await readdirAsync(PHOTO_STORAGE_PATH);
+      const now = Date.now();
+      const retentionMs = PHOTO_RETENTION_HOURS * 60 * 60 * 1000;
+      
+      for (const file of files) {
+        const filePath = path.join(PHOTO_STORAGE_PATH, file);
+        const stats = await statAsync(filePath);
+        const fileAge = now - stats.mtimeMs;
+        
+        if (fileAge > retentionMs) {
+          await unlinkAsync(filePath);
+          deletedCount++;
+        }
+      }
+      
+      console.log(`Cleanup: Deleted ${deletedCount} old photos from local storage`);
+    } catch (localError) {
+      console.error('Error cleaning up old photos from local storage:', localError);
+    }
+    
     return deletedCount;
   } catch (error) {
     console.error('Error during photo cleanup:', error);
@@ -160,8 +307,10 @@ const verifyPhoto = async (photoFilename, referencePhotoUrl = null) => {
   // In a real implementation, this would use facial recognition to compare photos
   // For this implementation, we'll simply verify that the photo exists
   try {
-    const filePath = path.join(PHOTO_STORAGE_PATH, photoFilename);
-    if (!fs.existsSync(filePath)) {
+    // Try to get the photo from Cloudinary or local storage
+    try {
+      await getPhoto(photoFilename);
+    } catch (error) {
       return {
         verified: false,
         reason: 'Photo not found'

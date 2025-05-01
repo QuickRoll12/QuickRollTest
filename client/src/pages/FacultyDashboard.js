@@ -615,7 +615,7 @@ const FacultyDashboard = () => {
                                                     borderRadius: '5px'
                                                 }}>
                                                     <img 
-                                                        src={`${BACKEND_URL}/api/photo-verification/${cell.photoFilename}`}
+                                                        src={cell.cloudinaryUrl || `${BACKEND_URL}/api/photo-verification/${cell.photoFilename}`}
                                                         alt="Student"
                                                         style={{
                                                             width: '100%',

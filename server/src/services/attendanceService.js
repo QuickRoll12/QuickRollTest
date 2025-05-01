@@ -64,7 +64,8 @@ class AttendanceService {
                 studentRoll: null,
                 studentEmail: null,
                 photo_url: null,
-                photoFilename: null
+                photoFilename: null,
+                cloudinaryUrl: null
             }))
         );
         return newGrid;
@@ -156,7 +157,7 @@ class AttendanceService {
         };
     }
 
-    async markAttendance(department, semester, section, rollNumber, code, fingerprint, webRTCIPs, userId, req, gmail = null, photoFilename = null) {
+    async markAttendance(department, semester, section, rollNumber, code, fingerprint, webRTCIPs, userId, req, gmail = null, photoFilename = null, photoCloudinaryUrl = null) {
         const startTime = Date.now();
         console.log(`[${new Date().toISOString()}] - Attendance marking started`);
     
@@ -337,6 +338,10 @@ class AttendanceService {
             }
             // Add the photoFilename to the grid cell
             sessionData.grid[row][col].photoFilename = photoFilename;
+            // Add the Cloudinary URL if available
+            if (photoCloudinaryUrl) {
+                sessionData.grid[row][col].cloudinaryUrl = photoCloudinaryUrl;
+            }
             console.log(`Added photo filename ${photoFilename} to grid cell`);
         }
         
@@ -504,7 +509,8 @@ class AttendanceService {
                             studentRoll: null,
                             studentEmail: null,
                             photo_url: null,
-                            photoFilename: null
+                            photoFilename: null,
+                            cloudinaryUrl: null
                         };
                     }
                 })
