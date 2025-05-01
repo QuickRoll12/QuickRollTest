@@ -55,16 +55,16 @@ const StudentDashboard = () => {
         initDeviceIdentifiers();
     }, []);
 
-    // Initialize device detection
+    // Initialize security checks for all devices
     useEffect(() => {
-        // Check if it's an iOS device
+        // Check if it's an iOS device (just for logging purposes)
         const iosCheck = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         setIsIOS(iosCheck);
         
-        // If it's iOS, start security checks when a session is active
-        if (iosCheck && sessionActive) {
-            startIOSSecurityChecks();
-            // Set fullscreen to true for iOS to bypass the requirement
+        // Start security checks when a session is active for all devices
+        if (sessionActive) {
+            startSecurityChecks();
+            // Set fullscreen to true to bypass the requirement for all devices
             setIsFullScreen(true);
             fullScreenRequestedRef.current = true;
         }
@@ -309,62 +309,29 @@ const StudentDashboard = () => {
         };
     }, [sessionActive, isFullScreen, socket, user, selectedSemester, sessionType, fingerprint, webRTCIPs]);
 
-    // Function to request full-screen
+    // Function to initialize security checks without requiring full-screen
     const requestFullScreen = () => {
-        // Check if it's an iOS device
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        console.log('Initializing security checks without full-screen requirement');
         
-        if (isIOS) {
-            // For iOS devices, we can't use the Fullscreen API
-            console.log('iOS device detected - fullscreen API not supported');
-            
-            // Set a flag to bypass the fullscreen requirement for iOS
-            setIsFullScreen(true); // Pretend we're in fullscreen for iOS
-            fullScreenRequestedRef.current = true;
-            
-            // Show a message to the user
-            setMessage('Full-screen mode is not supported on iOS devices. You can still mark attendance.');
-            
-            // Start periodic checks for other security measures
-            startIOSSecurityChecks();
-            
-            return;
-        }
+        // Set a flag to bypass the fullscreen requirement for all devices
+        setIsFullScreen(true); // Pretend we're in fullscreen for all devices
+        fullScreenRequestedRef.current = true;
         
-        const docEl = document.documentElement;
+        // Start periodic checks for security measures
+        startSecurityChecks();
         
-        const requestMethod = 
-            docEl.requestFullscreen || 
-            docEl.webkitRequestFullscreen || 
-            docEl.mozRequestFullScreen || 
-            docEl.msRequestFullscreen;
-            
-        if (requestMethod) {
-            requestMethod.call(docEl);
-            
-            // Start periodic dimension checks after a short delay to ensure transition is complete
-            setTimeout(() => {
-                // Verify we're in true full-screen before allowing attendance
-                verifyTrueFullScreen();
-                
-                // Start periodic checks
-                startDimensionChecks();
-            }, 1000);
-        } else {
-            // Browser doesn't support fullscreen API
-            console.log('Fullscreen API not supported in this browser');
-            setError('Your browser doesn\'t support full-screen mode. Please use a different browser.');
-        }
+        // No need to show a message since this is the default behavior now
+        setMessage('');
     };
 
-    // Function to handle iOS-specific security checks
-    const startIOSSecurityChecks = () => {
+    // Function to handle security checks for all devices
+    const startSecurityChecks = () => {
         // Clear any existing interval
         if (dimensionCheckIntervalRef.current) {
             clearInterval(dimensionCheckIntervalRef.current);
         }
         
-        // For iOS, we'll use visibility change as the primary security measure
+        // Use visibility change as the primary security measure for all devices
         // Set up a new interval to check visibility every 5 seconds
         dimensionCheckIntervalRef.current = setInterval(() => {
             if (document.hidden && sessionActive) {
@@ -626,12 +593,8 @@ const StudentDashboard = () => {
             return;
         }
 
-        // Check if in full-screen mode (except for iOS devices)
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        if (!isFullScreen && !isIOS) {
-            setError('You must be in full-screen mode to mark attendance. Please click the "Enter Full Screen" button.');
-            return;
-        }
+        // No need to check for full-screen mode as we're bypassing it for all devices
+        // The security checks are still active through the visibility and tab switching detection
 
         // For roll-based sessions, validate roll number
         if (sessionType === 'roll' && (!user.classRollNumber || !/^\d{2}$/.test(user.classRollNumber))) {
@@ -763,17 +726,6 @@ const StudentDashboard = () => {
 
                 {sessionActive && (
                     <div className="mobile-container">
-                        {!isFullScreen && !isIOS && (
-                            <div className="fullscreen-prompt">
-                                <p>You must be in full-screen mode to mark attendance.</p>
-                                <button 
-                                    onClick={requestFullScreen}
-                                    className="mark-button"
-                                >
-                                    Enter Full Screen
-                                </button>
-                            </div>
-                        )}
                         
                         <div className="session-type-indicator">
                             <div className={`session-type ${sessionType === 'gmail' ? 'gmail' : 'roll'}`}>
