@@ -5,6 +5,8 @@ import { Box, Container, Paper } from '@mui/material';
 import Logo from '../components/Logo';
 import '../styles/login.css';
 import '../styles/notifications.css';
+import '../styles/login-background.css';
+import ParticlesBackground from '../pages/particle.js';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -122,33 +124,68 @@ const Login = () => {
   };
 
   return (
-    <Container component="main" maxWidth="xs" className="login-container">
-      {/* App Download Popup */}
-      {showAppPopup && (
-        <div className="app-download-popup">
-          <div className="popup-content">
-            <i className="fas fa-mobile-alt"></i>
-            <div className="popup-text">
-              <p><strong>Experience QuickRoll on the go!</strong> Mark attendance faster with our new Android app.</p>
-            </div>
-            <div className="popup-actions">
-              <a href="https://www.mediafire.com/file/f5nzyiid80dh75t/Quick_Roll.apk/file" className="download-btn" target="_blank" rel="noopener noreferrer">
-                Download Now
-              </a>
-              <button className="close-popup" onClick={() => setShowAppPopup(false)}>
-                <i className="fas fa-times"></i>
-              </button>
+    <>
+      {/* Animated Background */}
+      <div className="login-background">
+        {/* Particles.js component */}
+        <ParticlesBackground />
+        {/* Original background elements */}
+        <div className="network">
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <canvas className="lines-canvas" id="connectingDotsCanvas"></canvas>
+        </div>
+        <div className="glow glow-1"></div>
+        <div className="glow glow-2"></div>
+        <div className="pulse-overlay"></div>
+        <div className="overlay"></div>
+      </div>
+      
+      <Container component="main" maxWidth="xs" className="login-container">
+        {/* App Download Popup */}
+        {showAppPopup && (
+          <div className="app-download-popup">
+            <div className="popup-content">
+              <i className="fas fa-mobile-alt"></i>
+              <div className="popup-text">
+                <p><strong>Experience QuickRoll on the go!</strong> Mark attendance faster with our new Android app.</p>
+              </div>
+              <div className="popup-actions">
+                <a href="https://www.mediafire.com/file/f5nzyiid80dh75t/Quick_Roll.apk/file" className="download-btn" target="_blank" rel="noopener noreferrer">
+                  Download Now
+                </a>
+                <button className="close-popup" onClick={() => setShowAppPopup(false)}>
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      
-      <Paper elevation={3} className="login-card">
-        <div className="login-header">
-          <Logo />
-          <h2>Welcome Back!</h2>
-          <p>Please login to your account</p>
-        </div>
+        )}
+        
+        <Paper elevation={3} className="login-card">
+          <div className="login-header">
+            <Logo />
+            <h2>Welcome Back!</h2>
+            <p>Please login to your account</p>
+          </div>
 
         {showNotification && (
           <div className={`notification-popup ${notificationType}`}>
@@ -302,9 +339,81 @@ const Login = () => {
             </form>
           </>
         )}
-      </Paper>
-    </Container>
+        </Paper>
+      </Container>
+    </>
   );
 };
+
+// Script to create connecting dots animation
+const connectDots = () => {
+  const canvas = document.getElementById('connectingDotsCanvas');
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  const dots = document.querySelectorAll('.dot');
+  const dotsArray = Array.from(dots);
+  
+  // Set canvas size to match window size
+  const resizeCanvas = () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  };
+  
+  // Initial resize
+  resizeCanvas();
+  
+  // Resize on window resize
+  window.addEventListener('resize', resizeCanvas);
+  
+  // Animation function
+  const animate = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 1;
+    
+    // Draw connections between dots that are close enough
+    for (let i = 0; i < dotsArray.length; i++) {
+      const dot1 = dotsArray[i];
+      const dot1Rect = dot1.getBoundingClientRect();
+      const dot1X = dot1Rect.left + dot1Rect.width / 2;
+      const dot1Y = dot1Rect.top + dot1Rect.height / 2;
+      
+      for (let j = i + 1; j < dotsArray.length; j++) {
+        const dot2 = dotsArray[j];
+        const dot2Rect = dot2.getBoundingClientRect();
+        const dot2X = dot2Rect.left + dot2Rect.width / 2;
+        const dot2Y = dot2Rect.top + dot2Rect.height / 2;
+        
+        // Calculate distance between dots
+        const dx = dot1X - dot2X;
+        const dy = dot1Y - dot2Y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Only connect dots that are within a certain distance
+        if (distance < 150) {
+          // Opacity based on distance (closer = more opaque)
+          const opacity = 1 - (distance / 150);
+          ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.2})`;
+          
+          ctx.beginPath();
+          ctx.moveTo(dot1X, dot1Y);
+          ctx.lineTo(dot2X, dot2Y);
+          ctx.stroke();
+        }
+      }
+    }
+    
+    requestAnimationFrame(animate);
+  };
+  
+  // Start animation
+  animate();
+};
+
+// Run the animation when component mounts
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', connectDots);
+}
 
 export default Login;
