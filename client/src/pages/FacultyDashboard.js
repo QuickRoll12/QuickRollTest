@@ -631,12 +631,12 @@ const FacultyDashboard = () => {
                                                     />
                                                 </div>
                                             )}
-                                            <div style={{ fontSize: '12px', fontWeight: 'bold' }}>
+                                            <div style={{ fontSize: '31px', fontWeight: 'bold' }}>
                                                 {cell.code}
                                             </div>
                                             {cell.used && (
                                                 <div style={{ 
-                                                    fontSize: '10px', 
+                                                    fontSize: '31px', 
                                                     marginTop: '2px',
                                                     color: cell.photoFilename ? 'white' : '#ffeb3b',
                                                     fontWeight: 'bold'
