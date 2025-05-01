@@ -395,7 +395,7 @@ const StudentDashboard = () => {
         // Set up a new interval to check dimensions every 10 seconds
         dimensionCheckIntervalRef.current = setInterval(() => {
             checkDimensions();
-        }, 10000); // 10 seconds
+        }, 5000); // 10 seconds
     };
 
     // Function to check if dimensions have changed significantly
@@ -482,7 +482,7 @@ const StudentDashboard = () => {
                         violationType: 'split-screen'
                     });
                 }
-            }, 30000); // 30 seconds
+            }, 5000); // 30 seconds
             setFullScreenExitTimeout(timeout);
         }
     };
