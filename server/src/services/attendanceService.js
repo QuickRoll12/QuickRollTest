@@ -63,7 +63,8 @@ class AttendanceService {
                 studentName: null,
                 studentRoll: null,
                 studentEmail: null,
-                photo_url: null
+                photo_url: null,
+                photoFilename: null
             }))
         );
         return newGrid;
@@ -334,6 +335,9 @@ class AttendanceService {
                 sessionData.grid[row][col].used = false;
                 throw new Error('Photo verification failed');
             }
+            // Add the photoFilename to the grid cell
+            sessionData.grid[row][col].photoFilename = photoFilename;
+            console.log(`Added photo filename ${photoFilename} to grid cell`);
         }
         
         await Proxy.create({ 
@@ -499,7 +503,8 @@ class AttendanceService {
                             studentName: null,
                             studentRoll: null,
                             studentEmail: null,
-                            photo_url: null
+                            photo_url: null,
+                            photoFilename: null
                         };
                     }
                 })
