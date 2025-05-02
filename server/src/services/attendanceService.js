@@ -39,6 +39,10 @@ class AttendanceService {
         this.codeLength = 4;
         // api chance 
         this.chance = 1;
+        // Map to store auto-refresh timers for each session
+        this.autoRefreshTimers = new Map();
+        // Auto-refresh interval in milliseconds (8 seconds)
+        this.autoRefreshInterval = 8 * 1000;
     }
 
     generateUniqueCode() {
@@ -121,6 +125,9 @@ class AttendanceService {
 
         console.log(`Started session for ${department} - Semester ${semester} - Section ${section}`);
         console.log(`Session Type: ${sessionType || 'roll'}, Total Students: ${totalStudents || 'N/A (Gmail session)'}`);
+
+        // Start auto-refresh timer for this session
+        this.startAutoRefresh(sessionKey);
 
         return {
             success: true,
@@ -482,109 +489,117 @@ class AttendanceService {
         
         const sessionKey = this.generateSessionKey(department, semester, section);
         const sessionData = this.sessions.get(sessionKey);
-
-        if (!sessionData || !sessionData.active) {
-            throw new Error('No active session found');
-        }
-
-        // Check if this is a roll number-based or Gmail-based session
-        const isRollNumberSession = sessionData.sessionType === 'roll' || !sessionData.sessionType;
         
-        let newGrid;
-        
-        if (isRollNumberSession) {
-            // For roll number-based sessions, preserve used blocks
-            // Generate new codes only for unused blocks
-            newGrid = sessionData.grid.map(row => 
-                row.map(cell => {
-                    if (cell.used) {
-                        // Preserve used cells exactly as they are
-                        return { ...cell };
-                    } else {
-                        // Generate new codes for unused cells
-                        return {
-                            code: this.generateUniqueCode(),
-                            used: false,
-                            studentName: null,
-                            studentRoll: null,
-                            studentEmail: null,
-                            photo_url: null,
-                            photoFilename: null,
-                            cloudinaryUrl: null
-                        };
-                    }
-                })
-            );
-            
-            console.log(`Refreshed codes for ${department} - Semester ${semester} - Section ${section} - New codes generated for unmarked blocks while preserving used blocks`);
-        } else {
-            // For Gmail-based sessions, generate completely new grid with all cells marked as unused
-            newGrid = this.generateGrid();
-            console.log(`Refreshed codes for ${department} - Semester ${semester} - Section ${section} - All new codes generated (Gmail session)`);
+        if (!sessionData) {
+            throw new Error('No session found');
         }
         
-        // IMPORTANT: We're preserving the presentStudents set
-        // This ensures already marked students remain marked
-        // Only the grid codes are refreshed according to session type
+        if (!sessionData.active) {
+            throw new Error('Session is not active');
+        }
         
-        // Update the session with new grid
-        sessionData.grid = newGrid;
+        // Generate new codes for unused cells
+        for (let i = 0; i < sessionData.grid.length; i++) {
+            for (let j = 0; j < sessionData.grid[i].length; j++) {
+                // Only refresh codes for cells that haven't been used yet
+                if (!sessionData.grid[i][j].used) {
+                    sessionData.grid[i][j].code = this.generateUniqueCode();
+                }
+            }
+        }
         
-        // Update the session in the map
-        this.sessions.set(sessionKey, sessionData);
-
+        console.log(`Refreshed codes for ${department} - Semester ${semester} - Section ${section}`);
+        
         return {
             success: true,
-            message: isRollNumberSession 
-                ? 'Codes refreshed successfully - New codes are available for unmarked blocks while preserving used blocks' 
-                : 'Codes refreshed successfully - All new codes are available',
-            grid: newGrid,
-            totalStudents: sessionData.totalStudents
+            message: 'Codes refreshed successfully',
+            grid: sessionData.grid
         };
+    }
+    
+    /**
+     * Starts the auto-refresh timer for a session
+     * @param {string} sessionKey - Session key
+     */
+    startAutoRefresh(sessionKey) {
+        // Clear any existing timer
+        this.stopAutoRefresh(sessionKey);
+        
+        // Get session data
+        const sessionData = this.sessions.get(sessionKey);
+        if (!sessionData) return;
+        
+        // Create a new timer
+        const timer = setInterval(() => {
+            try {
+                // Extract department, semester, section from sessionKey
+                const [department, semester, section] = sessionKey.split('_');
+                
+                // Refresh the codes
+                const result = this.refreshCodes(department, semester, section);
+                
+                console.log(`Auto-refreshed codes for ${department} - Semester ${semester} - Section ${section}`);
+                
+                // If there's a callback registered, call it with the result
+                if (this.codeRegenerationCallback) {
+                    this.codeRegenerationCallback({
+                        grid: result.grid,
+                        department,
+                        semester,
+                        section
+                    });
+                }
+            } catch (error) {
+                console.error(`Error in auto-refresh for session ${sessionKey}:`, error.message);
+            }
+        }, this.autoRefreshInterval);
+        
+        // Store the timer
+        this.autoRefreshTimers.set(sessionKey, timer);
+        
+        console.log(`Started auto-refresh timer for session ${sessionKey} with interval ${this.autoRefreshInterval}ms`);
+    }
+    
+    /**
+     * Stops the auto-refresh timer for a session
+     * @param {string} sessionKey - Session key
+     */
+    stopAutoRefresh(sessionKey) {
+        const timer = this.autoRefreshTimers.get(sessionKey);
+        if (timer) {
+            clearInterval(timer);
+            this.autoRefreshTimers.delete(sessionKey);
+            console.log(`Stopped auto-refresh timer for session ${sessionKey}`);
+        }
+    }
+    
+    /**
+     * Sets the callback function for code regeneration
+     * @param {Function} callback - Callback function
+     */
+    setCodeRegenerationCallback(callback) {
+        this.codeRegenerationCallback = callback;
     }
 
     async endSession(department, semester, section) {
         this.validateFields(department, semester, section);
-
+        
         const sessionKey = this.generateSessionKey(department, semester, section);
-        
-        if (!this.sessions.has(sessionKey)) {
-            throw new Error('No active session found');
-        }
-
-        // Check if session is already ending to prevent race conditions
         const sessionData = this.sessions.get(sessionKey);
-        if (sessionData.isEnding) {
-            console.log(`Session ${sessionKey} is already being ended, preventing duplicate processing`);
-            return {
-                success: true,
-                message: 'Session is already being ended',
-                department,
-                semester,
-                section
-            };
-        }
-
-        // Mark session as ending
-        sessionData.isEnding = true;
-        this.sessions.set(sessionKey, sessionData);
-
-        const { totalStudents, presentStudents: presentSet, sessionType = 'roll' } = sessionData;
         
-        // Convert Set to Array for easier handling
-        const presentStudents = Array.from(presentSet);
-        
-        // Calculate absentees for roll-based sessions
-        const absentees = [];
-        if (sessionType === 'roll') {
-            for (let i = 1; i <= totalStudents; i++) {
-                const rollNumber = i < 10 ? `0${i}` : `${i}`;
-                if (!presentSet.has(rollNumber)) {
-                    absentees.push(rollNumber);
-                }
-            }
+        if (!sessionData) {
+            throw new Error('No session found');
         }
-
+        
+        if (!sessionData.active) {
+            throw new Error('Session is not active');
+        }
+        
+        // Stop the auto-refresh timer for this session
+        this.stopAutoRefresh(sessionKey);
+        
+        // Rest of the endSession method...
+        
         // Clear session timer if it exists
         if (this.sessionTimers.has(sessionKey)) {
             clearInterval(this.sessionTimers.get(sessionKey));
@@ -598,7 +613,7 @@ class AttendanceService {
         this.ipAddresses.delete(sessionKey);
 
         let allEmails = [];
-        if (sessionType === 'gmail') {
+        if (sessionData.sessionType === 'gmail') {
             try {
                 const User = require('../models/User');
                 const users = await User.find({ 
@@ -619,12 +634,22 @@ class AttendanceService {
             department,
             semester,
             section,
-            totalStudents,
-            presentStudents,
-            absentees,
+            totalStudents: sessionData.totalStudents,
+            presentStudents: Array.from(sessionData.presentStudents),
+            absentees: [],
             date: new Date(),
-            sessionType
+            sessionType: sessionData.sessionType || 'roll'
         };
+
+        // Calculate absentees for roll-based sessions
+        if (sessionData.sessionType === 'roll') {
+            for (let i = 1; i <= sessionData.totalStudents; i++) {
+                const rollNumber = i < 10 ? `0${i}` : `${i}`;
+                if (!sessionData.presentStudents.has(rollNumber)) {
+                    reportSessionData.absentees.push(rollNumber);
+                }
+            }
+        }
 
         // Clear session data
         this.sessions.delete(sessionKey);
@@ -692,9 +717,9 @@ class AttendanceService {
             //     department,
             //     semester,
             //     section,
-            //     totalStudents,
-            //     presentCount: presentStudents.length,
-            //     absentCount: absentees.length,
+            //     totalStudents: reportSessionData.totalStudents,
+            //     presentCount: reportSessionData.presentStudents.length,
+            //     absentCount: reportSessionData.absentees.length,
             //     date: new Date().toLocaleDateString(),
             //     attachmentPath: reportFilePath
             // });
@@ -706,10 +731,10 @@ class AttendanceService {
             console.log('Attendance record saved with ID:', attendanceRecord._id);
             
             // Send absence notification emails to absent students
-            if (sessionType === 'roll' && absentees.length > 0) {
+            if (sessionData.sessionType === 'roll' && reportSessionData.absentees.length > 0) {
                 try {
-                    console.log(`Sending absence notifications to ${absentees.length} students...`);
-                    this.sendAbsenceNotifications(department, section, absentees, {
+                    console.log(`Sending absence notifications to ${reportSessionData.absentees.length} students...`);
+                    this.sendAbsenceNotifications(department, section, reportSessionData.absentees, {
                         facultyName: facultyData.name,
                         sessionTime: sessionEndTime,
                         department,
@@ -728,7 +753,7 @@ class AttendanceService {
         }
 
         console.log(`Ended session for ${department} - Semester ${semester} - Section ${section}`);
-        console.log(`Session Type: ${sessionType}, Total Students: ${totalStudents}, Present: ${presentStudents.length}, Absent: ${sessionType === 'roll' ? absentees.length : 'N/A (Gmail session)'}`);
+        console.log(`Session Type: ${sessionData.sessionType}, Total Students: ${sessionData.totalStudents}, Present: ${sessionData.presentStudents.size}, Absent: ${sessionData.sessionType === 'roll' ? reportSessionData.absentees.length : 'N/A (Gmail session)'}`);
 
         return {
             success: true,
@@ -736,12 +761,12 @@ class AttendanceService {
             department,
             semester,
             section,
-            totalStudents,
-            presentCount: presentStudents.length,
-            absentees,
-            presentStudents,
-            sessionType,
-            allEmails: sessionType === 'gmail' ? allEmails : []
+            totalStudents: sessionData.totalStudents,
+            presentCount: sessionData.presentStudents.size,
+            absentees: reportSessionData.absentees,
+            presentStudents: Array.from(sessionData.presentStudents),
+            sessionType: sessionData.sessionType,
+            allEmails: sessionData.sessionType === 'gmail' ? allEmails : []
         };
     }
 

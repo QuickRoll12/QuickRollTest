@@ -105,6 +105,21 @@ mongoose.connect(process.env.MONGODB_URI, {
 .then(() => console.log('✅ Connected to MongoDB'))
 .catch((err) => console.error('❌ MongoDB connection error:', err));
 
+// Register the code regeneration callback with the attendanceService
+attendanceService.setCodeRegenerationCallback((data) => {
+    // This will be called whenever codes are auto-refreshed
+    if (io) {
+        io.emit('updateGrid', {
+            grid: data.grid,
+            department: data.department,
+            semester: data.semester,
+            section: data.section,
+            autoRefreshed: true // Flag to indicate this was an automatic refresh
+        });
+        console.log(`Auto-refresh: Emitted updateGrid event for ${data.department}-${data.semester}-${data.section}`);
+    }
+});
+
 // API routes for course and section data
 app.get('/api/courses', (req, res) => {
     res.json(courses);
@@ -366,7 +381,6 @@ io.on('connection', (socket) => {
             
             // Clean up temporary photos for this session
             try {
-                console.log(`Starting photo cleanup for session ${department}-${semester}-${section}`);
                 const deletedCount = await photoVerificationService.deleteSessionPhotos(
                     department,
                     semester,
@@ -374,7 +388,7 @@ io.on('connection', (socket) => {
                 );
                 console.log(`Cleaned up ${deletedCount} photos for session ${department}-${semester}-${section}`);
             } catch (photoError) {
-                console.error('Error cleaning up session photos:', photoError.message);
+                console.error('Error cleaning up session photos:', photoError);
                 // Continue with session end even if photo cleanup fails
             }
             
