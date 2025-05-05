@@ -14,6 +14,15 @@ const FacultyPastAttendance = () => {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [downloadLoading, setDownloadLoading] = useState(false);
   const navigate = useNavigate();
+  // New state variables for edit functionality
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [rollNumberToAdd, setRollNumberToAdd] = useState('');
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editSuccess, setEditSuccess] = useState('');
+  const [presentStudents, setPresentStudents] = useState([]);
+  const [absentStudents, setAbsentStudents] = useState([]);
 
   useEffect(() => {
     fetchAttendanceRecords();
@@ -255,6 +264,154 @@ const FacultyPastAttendance = () => {
     }, 3000);
   };
 
+  // Function to open edit modal
+  const handleEditRecord = (record) => {
+    setEditingRecord(record);
+    setPresentStudents([...record.presentStudents]);
+    setAbsentStudents([...record.absentees]);
+    setShowEditModal(true);
+    setEditError('');
+    setEditSuccess('');
+  };
+
+  // Function to close edit modal
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setEditingRecord(null);
+    setRollNumberToAdd('');
+    setEditError('');
+    setEditSuccess('');
+  };
+
+  // Function to move student from absent to present
+  const moveToPresent = (rollNumber) => {
+    // Check if roll number is already in present list
+    if (presentStudents.includes(rollNumber)) {
+      setEditError(`Roll number ${rollNumber} is already marked present`);
+      return;
+    }
+
+    // Remove from absent and add to present
+    setAbsentStudents(absentStudents.filter(roll => roll !== rollNumber));
+    setPresentStudents([...presentStudents, rollNumber].sort());
+    setEditSuccess(`Moved ${rollNumber} to present list`);
+    setTimeout(() => setEditSuccess(''), 2000);
+  };
+
+  // Function to move student from present to absent
+  const moveToAbsent = (rollNumber) => {
+    // Check if roll number is already in absent list
+    if (absentStudents.includes(rollNumber)) {
+      setEditError(`Roll number ${rollNumber} is already marked absent`);
+      return;
+    }
+
+    // Remove from present and add to absent
+    setPresentStudents(presentStudents.filter(roll => roll !== rollNumber));
+    setAbsentStudents([...absentStudents, rollNumber].sort());
+    setEditSuccess(`Moved ${rollNumber} to absent list`);
+    setTimeout(() => setEditSuccess(''), 2000);
+  };
+
+  // Function to add a new roll number
+  const handleAddRollNumber = () => {
+    // Validate roll number format (adjust as needed)
+    if (!rollNumberToAdd.trim()) {
+      setEditError('Please enter a valid roll number');
+      return;
+    }
+
+    const rollNumber = rollNumberToAdd.trim();
+
+    // Check if roll number already exists in either list
+    if (presentStudents.includes(rollNumber)) {
+      setEditError(`Roll number ${rollNumber} is already in the present list`);
+      return;
+    }
+
+    if (absentStudents.includes(rollNumber)) {
+      setEditError(`Roll number ${rollNumber} is already in the absent list`);
+      return;
+    }
+
+    // Default to adding to present list
+    setPresentStudents([...presentStudents, rollNumber].sort());
+    setEditSuccess(`Added ${rollNumber} to present list`);
+    setRollNumberToAdd('');
+    setTimeout(() => setEditSuccess(''), 2000);
+  };
+
+  // Function to save attendance changes
+  const saveAttendanceChanges = async () => {
+    if (!editingRecord) return;
+
+    try {
+      setEditLoading(true);
+      setEditError('');
+      
+      const token = localStorage.getItem('token');
+      const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+      
+      // Calculate the new present count
+      const presentCount = presentStudents.length;
+      
+      const response = await axios.put(
+        `${BACKEND_URL}/api/attendance/records/${editingRecord._id}`,
+        {
+          presentStudents,
+          absentees: absentStudents,
+          presentCount
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        // Update the record in the local state
+        const updatedRecords = records.map(record => 
+          record._id === editingRecord._id 
+            ? { 
+                ...record, 
+                presentStudents, 
+                absentees: absentStudents,
+                presentCount
+              } 
+            : record
+        );
+        
+        setRecords(updatedRecords);
+        setFilteredRecords(
+          filteredRecords.map(record => 
+            record._id === editingRecord._id 
+              ? { 
+                  ...record, 
+                  presentStudents, 
+                  absentees: absentStudents,
+                  presentCount
+                } 
+              : record
+          )
+        );
+        
+        setEditSuccess('Attendance record updated successfully');
+        setTimeout(() => {
+          setShowEditModal(false);
+          setEditingRecord(null);
+          setEditSuccess('');
+        }, 1500);
+      }
+    } catch (error) {
+      console.error('Error updating attendance record:', error);
+      setEditError(`Failed to update attendance: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   return (
     <div className="past-attendance-container">
       <div className="header">
@@ -403,9 +560,114 @@ const FacultyPastAttendance = () => {
                 >
                   <i className="fas fa-copy"></i> Copy Absent
                 </button>
+                <button 
+                  className="edit-button" 
+                  onClick={() => handleEditRecord(record)}
+                >
+                  <i className="fas fa-edit"></i> Edit Attendance
+                </button>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Edit Attendance Modal */}
+      {showEditModal && editingRecord && (
+        <div className="edit-modal-overlay">
+          <div className="edit-modal">
+            <div className="edit-modal-header">
+              <h3>Edit Attendance Record</h3>
+              <button className="close-button" onClick={handleCloseEditModal}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <div className="edit-modal-content">
+              <div className="record-info">
+                <p><strong>Department:</strong> {editingRecord.department}</p>
+                <p><strong>Section:</strong> {editingRecord.section}</p>
+                <p><strong>Date:</strong> {formatDate(editingRecord.date)}</p>
+                <p><strong>Total Students:</strong> {editingRecord.totalStudents}</p>
+              </div>
+              
+              {editError && <div className="edit-error">{editError}</div>}
+              {editSuccess && <div className="edit-success">{editSuccess}</div>}
+              
+              <div className="add-roll-number">
+                <h4>Add Roll Number</h4>
+                <div className="add-roll-form">
+                  <input
+                    type="text"
+                    value={rollNumberToAdd}
+                    onChange={(e) => setRollNumberToAdd(e.target.value)}
+                    placeholder="Enter roll number"
+                  />
+                  <button onClick={handleAddRollNumber}>Add</button>
+                </div>
+              </div>
+              
+              <div className="edit-lists">
+                <div className="edit-present-list">
+                  <h4>Present Students ({presentStudents.length})</h4>
+                  <div className="edit-roll-numbers">
+                    {presentStudents.length > 0 ? (
+                      presentStudents.map((roll, index) => (
+                        <div key={index} className="edit-roll-badge present">
+                          <span>{roll}</span>
+                          <button onClick={() => moveToAbsent(roll)} title="Mark as absent">
+                            <i className="fas fa-arrow-right"></i>
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="empty-message">No students present</p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="edit-absent-list">
+                  <h4>Absent Students ({absentStudents.length})</h4>
+                  <div className="edit-roll-numbers">
+                    {absentStudents.length > 0 ? (
+                      absentStudents.map((roll, index) => (
+                        <div key={index} className="edit-roll-badge absent">
+                          <button onClick={() => moveToPresent(roll)} title="Mark as present">
+                            <i className="fas fa-arrow-left"></i>
+                          </button>
+                          <span>{roll}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="empty-message">No students absent</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="edit-modal-footer">
+              <button 
+                className="cancel-button" 
+                onClick={handleCloseEditModal}
+              >
+                Cancel
+              </button>
+              <button 
+                className="save-button" 
+                onClick={saveAttendanceChanges}
+                disabled={editLoading}
+              >
+                {editLoading ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i> Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

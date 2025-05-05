@@ -130,6 +130,63 @@ router.post('/records', auth, ensureFaculty, async (req, res) => {
   }
 });
 
+// Update an existing attendance record
+router.put('/records/:id', auth, ensureFaculty, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { presentStudents, absentees, presentCount } = req.body;
+    
+    // Validate required fields
+    if (!presentStudents || !absentees) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Missing required fields for attendance update' 
+      });
+    }
+    
+    // Get the record to ensure it belongs to this faculty
+    const record = await attendanceRecordService.getAttendanceRecord(id);
+    
+    if (!record) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Attendance record not found' 
+      });
+    }
+    
+    // Ensure the faculty can only edit their own records
+    if (record.facultyId !== req.user.facultyId) {
+      return res.status(403).json({ 
+        success: false,
+        message: 'You are not authorized to edit this attendance record' 
+      });
+    }
+    
+    // Update the record
+    const updatedRecord = await attendanceRecordService.updateAttendanceRecord(
+      id,
+      {
+        presentStudents,
+        absentees,
+        presentCount: presentCount || presentStudents.length
+      }
+    );
+    
+    res.json({
+      success: true,
+      message: 'Attendance record updated successfully',
+      record: updatedRecord
+    });
+  } catch (error) {
+    console.error('Error updating attendance record:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
+  }
+});
+
 // Get a specific attendance record
 router.get('/records/:id', auth, ensureFaculty, ensureOwnAttendance, async (req, res) => {
   try {

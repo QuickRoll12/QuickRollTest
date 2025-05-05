@@ -228,6 +228,115 @@ class AttendanceRecordService {
       throw new Error(`Failed to increment download count: ${error.message}`);
     }
   }
+
+  /**
+   * Get attendance records for a specific faculty
+   * @param {string} facultyId - ID of the faculty
+   * @param {Object} filters - Optional filters for department, section, date
+   * @param {number} limit - Maximum number of records to return
+   * @returns {Promise<Array>} - List of attendance records
+   */
+  async getFacultyAttendanceRecords(facultyId, filters = {}, limit = 30) {
+    try {
+      // Build query object
+      const query = { facultyId };
+      
+      // Add optional filters
+      if (filters.department) query.department = filters.department;
+      if (filters.section) query.section = filters.section;
+      if (filters.date) {
+        const date = new Date(filters.date);
+        const nextDay = new Date(date);
+        nextDay.setDate(nextDay.getDate() + 1);
+        
+        query.date = {
+          $gte: date,
+          $lt: nextDay
+        };
+      }
+      
+      // Find records with query and limit
+      const records = await AttendanceRecord.find(query)
+        .sort({ date: -1 })
+        .limit(limit);
+      
+      return records;
+    } catch (error) {
+      console.error('Error fetching faculty attendance records:', error);
+      throw new Error(`Failed to fetch attendance records: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get a specific attendance record by ID
+   * @param {string} recordId - ID of the attendance record
+   * @returns {Promise<Object>} - Attendance record
+   */
+  async getAttendanceRecord(recordId) {
+    try {
+      const record = await AttendanceRecord.findById(recordId);
+      return record;
+    } catch (error) {
+      console.error('Error fetching attendance record:', error);
+      throw new Error(`Failed to fetch attendance record: ${error.message}`);
+    }
+  }
+
+  /**
+   * Update an existing attendance record
+   * @param {string} recordId - ID of the attendance record to update
+   * @param {Object} updateData - Data to update (presentStudents, absentees, presentCount)
+   * @returns {Promise<Object>} - Updated attendance record
+   */
+  async updateAttendanceRecord(recordId, updateData) {
+    try {
+      // Validate the update data
+      const { presentStudents, absentees, presentCount } = updateData;
+      
+      if (!Array.isArray(presentStudents) || !Array.isArray(absentees)) {
+        throw new Error('Present students and absentees must be arrays');
+      }
+      
+      // Check for duplicate roll numbers between present and absent lists
+      const duplicates = presentStudents.filter(roll => absentees.includes(roll));
+      if (duplicates.length > 0) {
+        throw new Error(`Roll numbers cannot be in both present and absent lists: ${duplicates.join(', ')}`);
+      }
+      
+      // Update the record
+      const updatedRecord = await AttendanceRecord.findByIdAndUpdate(
+        recordId,
+        {
+          $set: {
+            presentStudents,
+            absentees,
+            presentCount: presentCount || presentStudents.length
+          }
+        },
+        { new: true } // Return the updated document
+      );
+      
+      if (!updatedRecord) {
+        throw new Error('Attendance record not found');
+      }
+      
+      // If the record has a PDF, we should invalidate it since the data has changed
+      if (updatedRecord.pdfUrl) {
+        // Set pdfUrl to null to indicate it needs regeneration
+        updatedRecord.pdfUrl = null;
+        updatedRecord.cloudinaryPublicId = null;
+        await updatedRecord.save();
+        
+        // Optionally, we could regenerate the PDF here, but that might be better
+        // done on-demand when the user requests it
+      }
+      
+      return updatedRecord;
+    } catch (error) {
+      console.error('Error updating attendance record:', error);
+      throw new Error(`Failed to update attendance record: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new AttendanceRecordService();
