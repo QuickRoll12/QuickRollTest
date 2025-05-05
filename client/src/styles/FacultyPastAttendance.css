@@ -641,6 +641,7 @@
   border-radius: 20px;
   font-size: 14px;
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .edit-roll-badge.present {
@@ -659,6 +660,12 @@
   margin: 0 5px;
 }
 
+.badge-actions {
+  display: flex;
+  align-items: center;
+  margin-left: 5px;
+}
+
 .edit-roll-badge button {
   background: none;
   border: none;
@@ -671,6 +678,15 @@
   height: 24px;
   border-radius: 50%;
   transition: background-color 0.3s;
+  opacity: 0.7;
+}
+
+.edit-roll-badge:hover button {
+  opacity: 1;
+}
+
+.edit-roll-badge button.remove-btn {
+  margin-left: 2px;
 }
 
 .edit-roll-badge.present button:hover {
@@ -679,6 +695,10 @@
 
 .edit-roll-badge.absent button:hover {
   background-color: rgba(0, 0, 0, 0.1);
+}
+
+.edit-roll-badge button.remove-btn:hover {
+  background-color: rgba(255, 0, 0, 0.1);
 }
 
 .edit-modal-footer {

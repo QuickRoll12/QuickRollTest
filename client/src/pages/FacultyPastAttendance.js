@@ -313,32 +313,70 @@ const FacultyPastAttendance = () => {
     setTimeout(() => setEditSuccess(''), 2000);
   };
 
-  // Function to add a new roll number
+  // Handle adding a new roll number to present list
   const handleAddRollNumber = () => {
-    // Validate roll number format (adjust as needed)
     if (!rollNumberToAdd.trim()) {
-      setEditError('Please enter a valid roll number');
+      setEditError('Please enter a roll number');
       return;
     }
 
-    const rollNumber = rollNumberToAdd.trim();
-
-    // Check if roll number already exists in either list
-    if (presentStudents.includes(rollNumber)) {
-      setEditError(`Roll number ${rollNumber} is already in the present list`);
+    // Validate roll number format
+    let formattedRollNumber = rollNumberToAdd.trim();
+    
+    // Check if it's a number
+    if (!/^\d+$/.test(formattedRollNumber)) {
+      setEditError('Roll number must contain only digits');
+      return;
+    }
+    
+    // Format single digit roll numbers with leading zero
+    if (formattedRollNumber.length === 1) {
+      formattedRollNumber = `0${formattedRollNumber}`;
+    }
+    
+    // Validate against total students
+    const totalStudentsNum = parseInt(editingRecord.totalStudents || 0, 10);
+    const rollNumberNum = parseInt(formattedRollNumber, 10);
+    
+    if (rollNumberNum <= 0) {
+      setEditError('Roll number must be greater than 0');
+      return;
+    }
+    
+    if (totalStudentsNum > 0 && rollNumberNum > totalStudentsNum) {
+      setEditError(`Roll number must be less than or equal to total students (${totalStudentsNum})`);
       return;
     }
 
-    if (absentStudents.includes(rollNumber)) {
-      setEditError(`Roll number ${rollNumber} is already in the absent list`);
+    // Check if roll number already exists in present or absent lists
+    if (presentStudents.includes(formattedRollNumber)) {
+      setEditError(`Roll number ${formattedRollNumber} is already in the present list`);
       return;
     }
 
-    // Default to adding to present list
-    setPresentStudents([...presentStudents, rollNumber].sort());
-    setEditSuccess(`Added ${rollNumber} to present list`);
+    if (absentStudents.includes(formattedRollNumber)) {
+      // If in absent list, move it to present
+      moveToPresent(formattedRollNumber);
+      setRollNumberToAdd('');
+      return;
+    }
+
+    // Add to present list
+    setPresentStudents([...presentStudents, formattedRollNumber]);
     setRollNumberToAdd('');
-    setTimeout(() => setEditSuccess(''), 2000);
+    setEditError('');
+  };
+
+  // Remove a roll number completely (not in present or absent)
+  const removeRollNumber = (rollNumber) => {
+    setPresentStudents(presentStudents.filter(rn => rn !== rollNumber));
+    setAbsentStudents(absentStudents.filter(rn => rn !== rollNumber));
+    setEditSuccess(`Roll number ${rollNumber} removed from attendance record`);
+    
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      setEditSuccess('');
+    }, 3000);
   };
 
   // Function to save attendance changes
@@ -609,37 +647,67 @@ const FacultyPastAttendance = () => {
               
               <div className="edit-lists">
                 <div className="edit-present-list">
-                  <h4>Present Students ({presentStudents.length})</h4>
+                  <h4>
+                    <i className="fas fa-check-circle" style={{ color: '#4caf50' }}></i>
+                    Present Students ({presentStudents.length})
+                  </h4>
                   <div className="edit-roll-numbers">
                     {presentStudents.length > 0 ? (
-                      presentStudents.map((roll, index) => (
-                        <div key={index} className="edit-roll-badge present">
-                          <span>{roll}</span>
-                          <button onClick={() => moveToAbsent(roll)} title="Mark as absent">
-                            <i className="fas fa-arrow-right"></i>
-                          </button>
+                      presentStudents.map((rollNumber) => (
+                        <div key={rollNumber} className="edit-roll-badge present">
+                          <span>{rollNumber}</span>
+                          <div className="badge-actions">
+                            <button 
+                              title="Move to absent"
+                              onClick={() => moveToAbsent(rollNumber)}
+                            >
+                              <i className="fas fa-arrow-right"></i>
+                            </button>
+                            <button 
+                              title="Remove from record"
+                              className="remove-btn"
+                              onClick={() => removeRollNumber(rollNumber)}
+                            >
+                              <i className="fas fa-times"></i>
+                            </button>
+                          </div>
                         </div>
                       ))
                     ) : (
-                      <p className="empty-message">No students present</p>
+                      <p className="empty-message">No students marked present</p>
                     )}
                   </div>
                 </div>
-                
+
                 <div className="edit-absent-list">
-                  <h4>Absent Students ({absentStudents.length})</h4>
+                  <h4>
+                    <i className="fas fa-times-circle" style={{ color: '#f44336' }}></i>
+                    Absent Students ({absentStudents.length})
+                  </h4>
                   <div className="edit-roll-numbers">
                     {absentStudents.length > 0 ? (
-                      absentStudents.map((roll, index) => (
-                        <div key={index} className="edit-roll-badge absent">
-                          <button onClick={() => moveToPresent(roll)} title="Mark as present">
-                            <i className="fas fa-arrow-left"></i>
-                          </button>
-                          <span>{roll}</span>
+                      absentStudents.map((rollNumber) => (
+                        <div key={rollNumber} className="edit-roll-badge absent">
+                          <span>{rollNumber}</span>
+                          <div className="badge-actions">
+                            <button 
+                              title="Move to present"
+                              onClick={() => moveToPresent(rollNumber)}
+                            >
+                              <i className="fas fa-arrow-left"></i>
+                            </button>
+                            <button 
+                              title="Remove from record"
+                              className="remove-btn"
+                              onClick={() => removeRollNumber(rollNumber)}
+                            >
+                              <i className="fas fa-times"></i>
+                            </button>
+                          </div>
                         </div>
                       ))
                     ) : (
-                      <p className="empty-message">No students absent</p>
+                      <p className="empty-message">No students marked absent</p>
                     )}
                   </div>
                 </div>
