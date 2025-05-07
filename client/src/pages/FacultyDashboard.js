@@ -1075,9 +1075,9 @@ const styles = {
         borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         marginBottom: '20px',
-        width: '60%',
-        maxWidth: '600px',
-        margin: '0 auto 20px auto',
+        // width: '60%',
+        // maxWidth: '600px',
+        // margin: '0 auto 20px auto',
     },
     navButton: {
         backgroundColor: '#2196f3',
