@@ -62,7 +62,6 @@ const sendFacultyCredentials = async (email, name, facultyId, tempPassword) => {
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Faculty ID:</strong> ${facultyId}</p>
       <p><strong>Steps required for login:</strong></p>
-      <p><strong>Steps required for login:</strong></p>
         <ol>
           <li>
             Click this link to reset your password directly: 
@@ -74,7 +73,6 @@ const sendFacultyCredentials = async (email, name, facultyId, tempPassword) => {
           <li>Submit the request.</li>
         </ol>
         <p>If successful, you will be redirected to the login page. If not, please cross-verify your Faculty ID and the new password you entered.</p>
-        <p>For security reasons, you will be required to change your password for login.</p>
         <p>If you have any questions, please contact the administrator.</p>
         <p>Thank you for using QuickRoll Attendance System.</p>
         <p>Regard,<br>QuickRoll Attendance System</p>
