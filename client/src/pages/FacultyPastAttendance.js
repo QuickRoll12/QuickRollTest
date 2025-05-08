@@ -226,6 +226,93 @@ const FacultyPastAttendance = () => {
     copyToClipboard(rollNumbers);
   };
 
+  // Function to handle sending an email report with formatted HTML content
+  const handleEmailReport = (record) => {
+    // Calculate attendance rate
+    const attendanceRate = ((record.presentCount / record.totalStudents) * 100).toFixed(2);
+    
+    // Create HTML email content
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <h1 style="color: #2196f3; text-align: center;">Attendance Report</h1>
+        <p style="text-align: center; color: #757575;">Generated on ${formatDate(record.date)}</p>
+        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+        
+        <h2 style="color: #333;">Session Details</h2>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Department:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">${record.department}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Section:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">${record.section}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Date:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">${formatDate(record.date)}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Faculty:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">${record.facultyName}</td>
+          </tr>
+        </table>
+        
+        <h2 style="color: #333;">Attendance Summary</h2>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Total Students:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">${record.totalStudents}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Present:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">${record.presentCount}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Absent:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">${record.totalStudents - record.presentCount}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; font-weight: bold;">Attendance Rate:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e0e0e0;">${attendanceRate}%</td>
+          </tr>
+        </table>
+        
+        <p style="margin-top: 30px; color: #757575; font-size: 14px; text-align: center;">
+          This is an automated email sent by the QuickRoll Attendance System.<br>
+        </p>
+      </div>
+    `;
+    
+    // Create a plain text version for email clients that don't support HTML
+    const plainText = `Attendance Report
+
+Generated on ${formatDate(record.date)}
+
+Session Details:
+- Department: ${record.department}
+- Section: ${record.section}
+- Date: ${formatDate(record.date)}
+- Faculty: ${record.facultyName || 'N/A'}
+
+Attendance Summary:
+- Total Students: ${record.totalStudents}
+- Present: ${record.presentCount}
+- Absent: ${record.totalStudents - record.presentCount}
+- Attendance Rate: ${attendanceRate}%
+
+This is an automated email sent by the QuickRoll Attendance System.`;
+    
+    // Encode the plain text for the mailto link
+    const encodedPlainText = encodeURIComponent(plainText);
+    
+    // Open the default email client with the pre-filled email
+    window.open(`mailto:?subject=Attendance Report - ${record.department} ${record.section}&body=${encodedPlainText}`);
+    
+    // Show success message
+    showSuccessMessage('Email template prepared');
+  };
+
   // Function to show success message
   const showSuccessMessage = (message) => {
     const messageElement = document.createElement('div');
@@ -582,7 +669,7 @@ const FacultyPastAttendance = () => {
                 </button>
                 <button 
                   className="email-button" 
-                  onClick={() => window.open(`mailto:?subject=Attendance Report - ${record.department} ${record.section}&body=Attendance report for ${formatDate(record.date)}%0A%0ATotal Students: ${record.totalStudents}%0APresent: ${record.presentCount}%0AAbsent: ${record.totalStudents - record.presentCount}`)}
+                  onClick={() => handleEmailReport(record)}
                 >
                   <i className="fas fa-envelope"></i> Email Report
                 </button>
