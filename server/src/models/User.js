@@ -69,7 +69,9 @@ const userSchema = new mongoose.Schema({
   sectionId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Section',
-    required: true
+    required: function() {
+      return this.role === 'student'; // Only required for students, not for faculty
+    }
   },
   isVerified: {
     type: Boolean,
