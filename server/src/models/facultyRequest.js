@@ -26,11 +26,7 @@ const FacultyRequestSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
-  // Legacy field - kept for backward compatibility
-  sectionsTeaching: {
-    type: [String],
-    default: []
-  },
+  // Field removed as it's no longer needed
   // New field for teaching assignments with semester-section combinations
   teachingAssignments: {
     type: [TeachingAssignmentSchema],

@@ -182,12 +182,14 @@ const AdminFacultyRequests = () => {
                   <span className="detail-value">{request.department}</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-label">Sections:</span>
+                  <span className="detail-label">Teaching Assignments:</span>
                   <span className="detail-value">
-                    {request.sectionsTeaching && request.sectionsTeaching.length > 0 ? (
+                    {request.teachingAssignments && request.teachingAssignments.length > 0 ? (
                       <div className="sections-tags">
-                        {request.sectionsTeaching.map((section, index) => (
-                          <span key={index} className="section-tag-admin">{section}</span>
+                        {request.teachingAssignments.map((assignment, index) => (
+                          <span key={index} className="section-tag-admin">
+                            Sem {assignment.semester} - {assignment.section}
+                          </span>
                         ))}
                       </div>
                     ) : (

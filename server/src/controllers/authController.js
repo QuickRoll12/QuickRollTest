@@ -669,9 +669,6 @@ exports.facultyRequest = async (req, res) => {
       return res.status(400).json({ message: 'Invalid teaching assignments format' });
     }
     
-    // Legacy support for old format
-    const sectionsTeaching = req.body.sectionsTeaching || [];
-    
     // Validate inputs
     if (!name || !email || !department || !photoUrl) {
       console.error('Missing required fields:', { name, email, department, photoUrl });
@@ -713,8 +710,7 @@ exports.facultyRequest = async (req, res) => {
       name,
       email,
       department,
-      sectionsTeaching, // Keep for backward compatibility
-      teachingAssignments, // Add the new teaching assignments field
+      teachingAssignments, // Only use the new teaching assignments field
       photoUrl
     });
     

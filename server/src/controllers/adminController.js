@@ -45,6 +45,13 @@ exports.approveFacultyRequest = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(tempPassword, salt);
     
+    // Ensure teachingAssignments is not empty to avoid validation errors
+    if (!request.teachingAssignments || !Array.isArray(request.teachingAssignments) || request.teachingAssignments.length === 0) {
+      return res.status(400).json({ 
+        message: 'Faculty request must include at least one teaching assignment with semester and section' 
+      });
+    }
+    
     const newFaculty = new User({
       name: request.name,
       email: request.email,
@@ -57,10 +64,8 @@ exports.approveFacultyRequest = async (req, res) => {
       classRollNumber: 'N/A', // Not applicable for faculty
       universityRollNumber: 'N/A', // Not applicable for faculty
       department: request.department,
-      // Keep the legacy field for backward compatibility
-      sectionsTeaching: request.sectionsTeaching || [],
-      // Add the new teaching assignments field
-      teachingAssignments: request.teachingAssignments || [],
+      // Only use the new teaching assignments field
+      teachingAssignments: request.teachingAssignments,
       isVerified: true, // Auto-verify faculty accounts
       passwordChangeRequired: true // Require password change on first login
     });
