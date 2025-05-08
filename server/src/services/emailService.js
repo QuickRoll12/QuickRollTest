@@ -62,16 +62,22 @@ const sendFacultyCredentials = async (email, name, facultyId, tempPassword) => {
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Faculty ID:</strong> ${facultyId}</p>
       <p><strong>Steps required for login:</strong></p>
-      <ol>
-        <li>Go to the "Forgot Password" option in the faculty section on the login page.</li>
-        <li>Enter your Gmail address (the one you used while submitting the faculty request).</li>
-        <li>Enter your Faculty ID (provided in the email above).</li>
-        <li>Set your new password.</li>
-        <li>Submit the request.</li>
-      </ol>
-      <p>If successful, you will be redirected to the login page. If not, please cross-verify your Faculty ID and the new password you entered.</p>
-      <p>For security reasons, you will be required to change your password for login.</p>
-      <p>If you have any questions, please contact the administrator.</p>
+      <p><strong>Steps required for login:</strong></p>
+        <ol>
+          <li>
+            Click this link to reset your password directly: 
+            <a href="https://quick-roll-test-uzkx.onrender.com/forgot-password">Forgot Password?</a>
+          </li>
+          <li>Enter your Gmail address (the one you used while submitting the faculty request).</li>
+          <li>Enter your Faculty ID (provided in the email above).</li>
+          <li>Set your new password.</li>
+          <li>Submit the request.</li>
+        </ol>
+        <p>If successful, you will be redirected to the login page. If not, please cross-verify your Faculty ID and the new password you entered.</p>
+        <p>For security reasons, you will be required to change your password for login.</p>
+        <p>If you have any questions, please contact the administrator.</p>
+        <p>Thank you for using QuickRoll Attendance System.</p>
+        <p>Regard,<br>QuickRoll Attendance System</p>
     `
   };
 
@@ -96,6 +102,7 @@ const sendFacultyRejectionEmail = async (email, name, reason = '') => {
       <p>If you believe this is an error or would like more information, please contact the administrator.</p>
       <p>You may submit a new request with updated information if needed.</p>
       <p>Thank you for your interest in the QuickRoll Attendance System.</p>
+      <p>Regard,<br>QuickRoll Attendance System</p>
     `
   };
 
