@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../styles/AdminFacultyRequests.css';
 import { Modal } from 'react-bootstrap';
+import '../styles/AdminFacultyRequests.css';
 
 // Use environment variable directly instead of importing from config
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
@@ -294,9 +294,25 @@ const AdminFacultyRequests = () => {
         <Modal.Body>
           {currentRequest && (
             <div>
-              <p><strong>Faculty Name:</strong> {currentRequest.name}</p>
-              <p><strong>Email:</strong> {currentRequest.email}</p>
-              <p><strong>Department:</strong> {currentRequest.department}</p>
+              <div className="faculty-info-card">
+                <div className="faculty-info-header">
+                  <h4>Faculty Information</h4>
+                </div>
+                <div className="faculty-info-content">
+                  <div className="info-row">
+                    <div className="info-label">Name:</div>
+                    <div className="info-value">{currentRequest.name}</div>
+                  </div>
+                  <div className="info-row">
+                    <div className="info-label">Email:</div>
+                    <div className="info-value">{currentRequest.email}</div>
+                  </div>
+                  <div className="info-row">
+                    <div className="info-label">Department:</div>
+                    <div className="info-value">{currentRequest.department}</div>
+                  </div>
+                </div>
+              </div>
               
               <div className="assignment-selection">
                 <h5>Select Teaching Assignments to Approve:</h5>
