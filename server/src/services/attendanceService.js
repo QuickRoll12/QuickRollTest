@@ -682,11 +682,16 @@ class AttendanceService {
 
             // Try to get faculty information from the database
             try {
-                // Find the faculty for this department and section
+                // Find the faculty for this department and section using the new teachingAssignments format
                 const faculty = await User.findOne({
                     role: 'faculty',
                     department: department,
-                    sectionsTeaching: { $in: [section] }
+                    teachingAssignments: { 
+                        $elemMatch: { 
+                            semester: semester,
+                            section: section 
+                        }
+                    }
                 });
 
                 if (faculty) {
