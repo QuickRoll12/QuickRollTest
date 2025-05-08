@@ -23,6 +23,7 @@ exports.getFacultyRequests = async (req, res) => {
 exports.approveFacultyRequest = async (req, res) => {
   try {
     const { requestId } = req.params;
+    const { approvedAssignments } = req.body; // Array of approved teaching assignments
     
     // Find the faculty request
     const request = await FacultyRequest.findById(requestId);
@@ -35,6 +36,35 @@ exports.approveFacultyRequest = async (req, res) => {
       return res.status(400).json({ message: `Request already ${request.status}` });
     }
     
+    // Ensure teachingAssignments is not empty to avoid validation errors
+    if (!request.teachingAssignments || !Array.isArray(request.teachingAssignments) || request.teachingAssignments.length === 0) {
+      return res.status(400).json({ 
+        message: 'Faculty request must include at least one teaching assignment with semester and section' 
+      });
+    }
+    
+    // If no approved assignments are specified, use all requested assignments
+    let assignmentsToApprove = request.teachingAssignments;
+    let requestStatus = 'approved';
+    
+    // If specific assignments are approved, filter them
+    if (approvedAssignments && Array.isArray(approvedAssignments) && approvedAssignments.length > 0) {
+      // Filter only valid assignments that exist in the original request
+      assignmentsToApprove = request.teachingAssignments.filter(assignment => {
+        return approvedAssignments.some(approved => 
+          approved.semester === assignment.semester && 
+          approved.section === assignment.section
+        );
+      });
+      
+      // If no assignments were approved or some were rejected, mark as partially approved
+      if (assignmentsToApprove.length === 0) {
+        return res.status(400).json({ message: 'At least one teaching assignment must be approved' });
+      } else if (assignmentsToApprove.length < request.teachingAssignments.length) {
+        requestStatus = 'partially_approved';
+      }
+    }
+    
     // Use "quickroll123" as the default password for faculty - this is the correct default password
     const tempPassword = "quickroll123";
     
@@ -44,13 +74,6 @@ exports.approveFacultyRequest = async (req, res) => {
     // Hash the password manually to ensure it's stored correctly
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(tempPassword, salt);
-    
-    // Ensure teachingAssignments is not empty to avoid validation errors
-    if (!request.teachingAssignments || !Array.isArray(request.teachingAssignments) || request.teachingAssignments.length === 0) {
-      return res.status(400).json({ 
-        message: 'Faculty request must include at least one teaching assignment with semester and section' 
-      });
-    }
     
     const newFaculty = new User({
       name: request.name,
@@ -64,8 +87,8 @@ exports.approveFacultyRequest = async (req, res) => {
       classRollNumber: 'N/A', // Not applicable for faculty
       universityRollNumber: 'N/A', // Not applicable for faculty
       department: request.department,
-      // Only use the new teaching assignments field
-      teachingAssignments: request.teachingAssignments,
+      // Only use the approved teaching assignments
+      teachingAssignments: assignmentsToApprove,
       isVerified: true, // Auto-verify faculty accounts
       passwordChangeRequired: true // Require password change on first login
     });
@@ -77,8 +100,16 @@ exports.approveFacultyRequest = async (req, res) => {
     await newFaculty.save();
     
     // Update request status
-    request.status = 'approved';
+    request.status = requestStatus;
     request.processedAt = new Date(); // Add timestamp for automatic deletion
+    request.approvedAssignments = assignmentsToApprove; // Store which assignments were approved
+    request.processedBy = req.admin ? req.admin.id : 'admin'; // Track who processed the request
+    
+    // Set expiration date for automatic deletion (24 hours from now)
+    const expirationDate = new Date();
+    expirationDate.setHours(expirationDate.getHours() + 24);
+    request.expiresAt = expirationDate;
+    
     await request.save();
     
     // Send email with credentials
@@ -112,23 +143,24 @@ exports.approveFacultyRequest = async (req, res) => {
 // Reject faculty request
 exports.rejectFacultyRequest = async (req, res) => {
   try {
-    const { requestId } = req.params;
-    const { rejectionReason } = req.body; // Optional reason for rejection
-    
-    // Find the faculty request
-    const request = await FacultyRequest.findById(requestId);
+    const request = await FacultyRequest.findById(req.params.requestId);
     if (!request) {
       return res.status(404).json({ message: 'Faculty request not found' });
     }
     
-    // Check if request is already processed
     if (request.status !== 'pending') {
-      return res.status(400).json({ message: `Request already ${request.status}` });
+      return res.status(400).json({ message: `Request is already ${request.status}` });
     }
     
-    // Update request status
     request.status = 'rejected';
-    request.processedAt = new Date(); // Add timestamp for automatic deletion
+    request.processedAt = new Date(); // Add timestamp for when it was processed
+    request.processedBy = req.admin ? req.admin.id : 'admin'; // Track who processed the request
+    
+    // Set expiration date for automatic deletion (24 hours from now)
+    const expirationDate = new Date();
+    expirationDate.setHours(expirationDate.getHours() + 24);
+    request.expiresAt = expirationDate;
+    
     await request.save();
     
     // Send rejection email to faculty applicant

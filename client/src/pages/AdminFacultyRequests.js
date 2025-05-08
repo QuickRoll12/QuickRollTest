@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../styles/AdminFacultyRequests.css';
+import { Modal } from 'react-bootstrap';
 
 // Use environment variable directly instead of importing from config
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
@@ -12,6 +13,9 @@ const AdminFacultyRequests = () => {
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
   const [notification, setNotification] = useState({ message: '', type: '' });
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [currentRequest, setCurrentRequest] = useState(null);
+  const [selectedAssignments, setSelectedAssignments] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,26 +42,77 @@ const AdminFacultyRequests = () => {
     }
   };
 
+  const openApprovalModal = (request) => {
+    setCurrentRequest(request);
+    setSelectedAssignments([...request.teachingAssignments]); // Start with all assignments selected
+    setShowApprovalModal(true);
+  };
+
+  const closeApprovalModal = () => {
+    setShowApprovalModal(false);
+    setCurrentRequest(null);
+    setSelectedAssignments([]);
+  };
+
+  const toggleAssignment = (assignment) => {
+    const isSelected = selectedAssignments.some(
+      item => item.semester === assignment.semester && item.section === assignment.section
+    );
+
+    if (isSelected) {
+      // Remove from selected
+      setSelectedAssignments(selectedAssignments.filter(
+        item => !(item.semester === assignment.semester && item.section === assignment.section)
+      ));
+    } else {
+      // Add to selected
+      setSelectedAssignments([...selectedAssignments, assignment]);
+    }
+  };
+
+  const selectAllAssignments = () => {
+    if (currentRequest) {
+      setSelectedAssignments([...currentRequest.teachingAssignments]);
+    }
+  };
+
+  const deselectAllAssignments = () => {
+    setSelectedAssignments([]);
+  };
+
   const handleApprove = async (requestId) => {
     try {
       setActionLoading(requestId);
       const token = localStorage.getItem('token');
       
-      await axios.post(`${BACKEND_URL}/api/admin/approve-faculty/${requestId}`, {}, {
+      await axios.post(`${BACKEND_URL}/api/admin/approve-faculty/${requestId}`, {
+        approvedAssignments: selectedAssignments
+      }, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
       
+      // Determine if it's a partial or full approval
+      const isPartialApproval = currentRequest && 
+        selectedAssignments.length < currentRequest.teachingAssignments.length;
+      
       // Update the request status in the UI
       setRequests(requests.map(req => 
-        req._id === requestId ? { ...req, status: 'approved' } : req
+        req._id === requestId ? { 
+          ...req, 
+          status: isPartialApproval ? 'partially_approved' : 'approved',
+          approvedAssignments: selectedAssignments 
+        } : req
       ));
       
       setNotification({
-        message: 'Faculty account approved successfully. Credentials have been sent via email.',
+        message: `Faculty account ${isPartialApproval ? 'partially' : ''} approved successfully. Credentials have been sent via email.`,
         type: 'success'
       });
+      
+      // Close the modal
+      closeApprovalModal();
       
       // Clear notification after 5 seconds
       setTimeout(() => {
@@ -211,11 +266,11 @@ const AdminFacultyRequests = () => {
               {request.status === 'pending' && (
                 <div className="request-actions">
                   <button 
-                    onClick={() => handleApprove(request._id)} 
+                    onClick={() => openApprovalModal(request)} 
                     className="approve-button"
                     disabled={actionLoading === request._id}
                   >
-                    {actionLoading === request._id ? 'Processing...' : 'Approve'}
+                    {actionLoading === request._id ? 'Processing...' : 'Review & Approve'}
                   </button>
                   <button 
                     onClick={() => handleReject(request._id)} 
@@ -230,6 +285,69 @@ const AdminFacultyRequests = () => {
           ))}
         </div>
       )}
+    
+      {/* Approval Modal */}
+      <Modal show={showApprovalModal} onHide={closeApprovalModal} centered className="approval-modal">
+        <Modal.Header closeButton>
+          <Modal.Title>Review Teaching Assignments</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {currentRequest && (
+            <div>
+              <p><strong>Faculty Name:</strong> {currentRequest.name}</p>
+              <p><strong>Email:</strong> {currentRequest.email}</p>
+              <p><strong>Department:</strong> {currentRequest.department}</p>
+              
+              <div className="assignment-selection">
+                <h5>Select Teaching Assignments to Approve:</h5>
+                <div className="selection-controls">
+                  <button onClick={selectAllAssignments} className="select-all-btn">Select All</button>
+                  <button onClick={deselectAllAssignments} className="deselect-all-btn">Deselect All</button>
+                </div>
+                
+                <div className="assignments-list">
+                  {currentRequest.teachingAssignments.map((assignment, index) => {
+                    const isSelected = selectedAssignments.some(
+                      item => item.semester === assignment.semester && item.section === assignment.section
+                    );
+                    
+                    return (
+                      <div key={index} className={`assignment-item ${isSelected ? 'selected' : ''}`}>
+                        <label className="assignment-checkbox">
+                          <input 
+                            type="checkbox" 
+                            checked={isSelected}
+                            onChange={() => toggleAssignment(assignment)}
+                          />
+                          <span className="checkbox-text">
+                            Semester {assignment.semester} - Section {assignment.section}
+                          </span>
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              <div className="warning-message">
+                {selectedAssignments.length === 0 && (
+                  <p className="text-danger">Please select at least one teaching assignment to approve.</p>
+                )}
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <button onClick={closeApprovalModal} className="cancel-btn">Cancel</button>
+          <button 
+            onClick={() => currentRequest && handleApprove(currentRequest._id)} 
+            className="confirm-approve-btn"
+            disabled={selectedAssignments.length === 0 || actionLoading}
+          >
+            {actionLoading ? 'Processing...' : 'Approve Selected'}
+          </button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

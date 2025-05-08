@@ -201,6 +201,157 @@
   transition: background-color 0.3s;
 }
 
+/* Approval Modal Styles */
+.approval-modal .modal-content {
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.approval-modal .modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.approval-modal .modal-title {
+  color: #333;
+  font-weight: 600;
+}
+
+.approval-modal .modal-body {
+  padding: 20px;
+}
+
+.assignment-selection {
+  margin-top: 20px;
+}
+
+.assignment-selection h5 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.selection-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.select-all-btn, .deselect-all-btn {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.select-all-btn:hover {
+  background-color: #e8f5e9;
+  border-color: #4CAF50;
+}
+
+.deselect-all-btn:hover {
+  background-color: #ffebee;
+  border-color: #f44336;
+}
+
+.assignments-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.assignment-item {
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  transition: background-color 0.2s;
+}
+
+.assignment-item:last-child {
+  margin-bottom: 0;
+}
+
+.assignment-item.selected {
+  background-color: #e8f5e9;
+}
+
+.assignment-checkbox {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+}
+
+.assignment-checkbox input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+.checkbox-text {
+  flex: 1;
+}
+
+.warning-message {
+  margin-top: 15px;
+}
+
+.text-danger {
+  color: #dc3545;
+}
+
+.modal-footer {
+  border-top: 1px solid #e9ecef;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancel-btn {
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-btn:hover {
+  background-color: #e9ecef;
+}
+
+.confirm-approve-btn {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.confirm-approve-btn:hover {
+  background-color: #3d8b40;
+}
+
+.confirm-approve-btn:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}
+
+/* Status badge for partially approved */
+.status-badge.partially_approved {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.request-card.partially_approved {
+  border-left: 4px solid #2196f3;
+}
+
 .approve-button {
   background-color: #4CAF50;
   color: white;

@@ -44,14 +44,28 @@ const FacultyRequestSchema = new mongoose.Schema({
   },
   status: { 
     type: String, 
-    enum: ['pending', 'approved', 'rejected'], 
+    enum: ['pending', 'approved', 'partially_approved', 'rejected'], 
     default: 'pending' 
+  },
+  approvedAssignments: {
+    type: [TeachingAssignmentSchema],
+    default: []
   },
   createdAt: { 
     type: Date, 
     default: Date.now 
   },
   processedAt: {
+    type: Date,
+    default: null
+  },
+  // For audit purposes
+  processedBy: {
+    type: String,
+    default: null
+  },
+  // Expiration date for automatic deletion
+  expiresAt: {
     type: Date,
     default: null
   }

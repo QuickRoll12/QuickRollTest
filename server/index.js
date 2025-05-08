@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const attendanceService = require('./src/services/attendanceService');
 const cleanupService = require('./src/services/cleanupService');
+const { cleanupProcessedRequests } = require('./src/utils/cleanupTasks');
 
 const app = express();
 const server = http.createServer(app);
@@ -198,6 +199,17 @@ io.on('connection', (socket) => {
         console.log('User disconnected');
     });
 });
+
+// Schedule cleanup task to run every hour
+setInterval(async () => {
+    try {
+        console.log('Running scheduled cleanup of processed faculty requests...');
+        const deletedCount = await cleanupProcessedRequests();
+        console.log(`Cleanup complete. Deleted ${deletedCount} expired faculty requests.`);
+    } catch (error) {
+        console.error('Error running scheduled cleanup:', error);
+    }
+}, 60 * 60 * 1000); // Run every hour
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
