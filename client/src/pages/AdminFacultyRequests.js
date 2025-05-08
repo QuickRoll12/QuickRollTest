@@ -287,7 +287,14 @@ const AdminFacultyRequests = () => {
       )}
     
       {/* Approval Modal */}
-      <Modal show={showApprovalModal} onHide={closeApprovalModal} centered className="approval-modal">
+      <Modal 
+        show={showApprovalModal} 
+        onHide={closeApprovalModal} 
+        centered 
+        className="approval-modal"
+        dialogClassName="modal-dialog-centered modal-lg"
+        aria-labelledby="approval-modal-title"
+      >
         <Modal.Header closeButton>
           <Modal.Title>Review Teaching Assignments</Modal.Title>
         </Modal.Header>

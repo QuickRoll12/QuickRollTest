@@ -206,6 +206,13 @@
   background-color: rgba(0, 0, 0, 0.5);
 }
 
+/* Fix for modal positioning */
+.modal-open .modal {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 .approval-modal {
   display: flex;
   align-items: center;
@@ -213,9 +220,16 @@
 }
 
 .approval-modal .modal-dialog {
-  max-width: 600px;
-  width: 90%;
-  margin: 30px auto;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 650px;
+}
+
+/* Ensure modal is square-shaped */
+.modal-lg {
+  min-width: 600px;
+  width: 80%;
+  max-width: 800px;
 }
 
 .approval-modal .modal-content {
