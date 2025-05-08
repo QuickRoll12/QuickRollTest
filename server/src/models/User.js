@@ -87,8 +87,23 @@ const userSchema = new mongoose.Schema({
       return this.role === 'faculty';
     }
   },
+  // Legacy field - kept for backward compatibility
   sectionsTeaching: {
     type: [String],
+    default: []
+  },
+  // New field for teaching assignments with semester-section combinations
+  teachingAssignments: {
+    type: [{
+      semester: {
+        type: String,
+        required: true
+      },
+      section: {
+        type: String,
+        required: true
+      }
+    }],
     validate: {
       validator: function(v) {
         // Only required for faculty role
@@ -97,7 +112,7 @@ const userSchema = new mongoose.Schema({
         }
         return true;
       },
-      message: 'Faculty must teach at least one section'
+      message: 'Faculty must have at least one teaching assignment'
     }
   }
 }, {

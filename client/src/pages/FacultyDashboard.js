@@ -26,6 +26,8 @@ const FacultyDashboard = () => {
     const [departments] = useState(['BTech', 'BCA', 'BCom', 'BBA', 'Law', 'MCA', 'MBA', 'BPharm','BSc','']);
     const [semesters] = useState(['1', '2', '3', '4', '5', '6', '7', '8']);
     const [availableSections, setAvailableSections] = useState([]);
+    const [availableTeachingAssignments, setAvailableTeachingAssignments] = useState([]);
+    const [availableSemesterSections, setAvailableSemesterSections] = useState({});
     const [sessionStats, setSessionStats] = useState(null);
     const [copiedText, setCopiedText] = useState('');
     const [attendanceType, setAttendanceType] = useState('roll'); // 'roll' or 'gmail'
@@ -63,8 +65,30 @@ const FacultyDashboard = () => {
         if (!loading && (!user || user.role !== 'faculty')) {
             navigate('/');
         } else if (user && user.role === 'faculty') {
-            // Set available sections from user's sectionsTeaching array
-            if (user.sectionsTeaching && Array.isArray(user.sectionsTeaching)) {
+            // Handle new teaching assignments structure
+            if (user.teachingAssignments && Array.isArray(user.teachingAssignments) && user.teachingAssignments.length > 0) {
+                setAvailableTeachingAssignments(user.teachingAssignments);
+                
+                // Create a mapping of semester to available sections
+                const semesterSections = {};
+                user.teachingAssignments.forEach(assignment => {
+                    if (!semesterSections[assignment.semester]) {
+                        semesterSections[assignment.semester] = [];
+                    }
+                    semesterSections[assignment.semester].push(assignment.section);
+                });
+                setAvailableSemesterSections(semesterSections);
+                
+                // For backward compatibility, still populate availableSections
+                if (user.sectionsTeaching && Array.isArray(user.sectionsTeaching)) {
+                    setAvailableSections(user.sectionsTeaching);
+                } else {
+                    // Extract unique sections from teaching assignments
+                    const uniqueSections = [...new Set(user.teachingAssignments.map(a => a.section))];
+                    setAvailableSections(uniqueSections);
+                }
+            } else if (user.sectionsTeaching && Array.isArray(user.sectionsTeaching)) {
+                // Legacy support for old structure
                 setAvailableSections(user.sectionsTeaching);
             }
         }
@@ -500,14 +524,26 @@ const FacultyDashboard = () => {
                         <label style={styles.label}>Semester:</label>
                         <select 
                             value={selectedSemester}
-                            onChange={(e) => setSelectedSemester(e.target.value)}
+                            onChange={(e) => {
+                                const newSemester = e.target.value;
+                                setSelectedSemester(newSemester);
+                                // Clear section when semester changes
+                                setSelectedSection('');
+                            }}
                             style={styles.select}
                             disabled={sessionActive}
                         >
                             <option value="">Select Semester</option>
-                            {semesters.map(sem => (
-                                <option key={sem} value={sem}>Sem: {sem}</option>
-                            ))}
+                            {/* Only show semesters that the faculty teaches */}
+                            {Object.keys(availableSemesterSections).length > 0 ? 
+                                Object.keys(availableSemesterSections).sort().map(sem => (
+                                    <option key={sem} value={sem}>Sem: {sem}</option>
+                                ))
+                                :
+                                semesters.map(sem => (
+                                    <option key={sem} value={sem}>Sem: {sem}</option>
+                                ))
+                            }
                         </select>
                     </div>
 
@@ -517,12 +553,20 @@ const FacultyDashboard = () => {
                             value={selectedSection}
                             onChange={(e) => setSelectedSection(e.target.value)}
                             style={styles.select}
-                            disabled={sessionActive}
+                            disabled={sessionActive || !selectedSemester}
                         >
                             <option value="">Select Section</option>
-                            {availableSections.map((section) => (
-                                <option key={section} value={section}>{section}</option>
-                            ))}
+                            {selectedSemester && availableSemesterSections[selectedSemester] ? 
+                                // Show only sections for the selected semester
+                                availableSemesterSections[selectedSemester].map((section) => (
+                                    <option key={section} value={section}>{section}</option>
+                                ))
+                                :
+                                // Fallback to all available sections if semester-section mapping is not available
+                                availableSections.map((section) => (
+                                    <option key={section} value={section}>{section}</option>
+                                ))
+                            }
                         </select>
                     </div>
 
@@ -1075,9 +1119,6 @@ const styles = {
         borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         marginBottom: '20px',
-        // width: '60%',
-        // maxWidth: '600px',
-        // margin: '0 auto 20px auto',
     },
     navButton: {
         backgroundColor: '#2196f3',

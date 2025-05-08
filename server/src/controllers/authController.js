@@ -657,7 +657,19 @@ exports.facultyRequest = async (req, res) => {
   try {
     console.log('Faculty request received:', req.body);
     const { name, email, department, photoUrl } = req.body;
-    // Get sectionsTeaching from the request body
+    
+    // Parse teaching assignments from the request body
+    let teachingAssignments = [];
+    try {
+      if (req.body.teachingAssignments) {
+        teachingAssignments = JSON.parse(req.body.teachingAssignments);
+      }
+    } catch (parseError) {
+      console.error('Error parsing teaching assignments:', parseError);
+      return res.status(400).json({ message: 'Invalid teaching assignments format' });
+    }
+    
+    // Legacy support for old format
     const sectionsTeaching = req.body.sectionsTeaching || [];
     
     // Validate inputs
@@ -666,10 +678,20 @@ exports.facultyRequest = async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
     
-    // Validate sections
-    if (!sectionsTeaching || !Array.isArray(sectionsTeaching) || sectionsTeaching.length === 0) {
-      console.error('Invalid sections:', sectionsTeaching);
-      return res.status(400).json({ message: 'At least one teaching section must be specified' });
+    // Validate teaching assignments
+    if (!teachingAssignments || !Array.isArray(teachingAssignments) || teachingAssignments.length === 0) {
+      console.error('Invalid teaching assignments:', teachingAssignments);
+      return res.status(400).json({ message: 'At least one teaching assignment must be specified' });
+    }
+    
+    // Validate each teaching assignment has semester and section
+    const invalidAssignments = teachingAssignments.filter(
+      assignment => !assignment.semester || !assignment.section
+    );
+    
+    if (invalidAssignments.length > 0) {
+      console.error('Invalid teaching assignments found:', invalidAssignments);
+      return res.status(400).json({ message: 'All teaching assignments must include both semester and section' });
     }
     
     // Check if email already exists in users
@@ -691,7 +713,8 @@ exports.facultyRequest = async (req, res) => {
       name,
       email,
       department,
-      sectionsTeaching, // Add the sections teaching field
+      sectionsTeaching, // Keep for backward compatibility
+      teachingAssignments, // Add the new teaching assignments field
       photoUrl
     });
     

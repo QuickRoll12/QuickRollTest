@@ -57,7 +57,10 @@ exports.approveFacultyRequest = async (req, res) => {
       classRollNumber: 'N/A', // Not applicable for faculty
       universityRollNumber: 'N/A', // Not applicable for faculty
       department: request.department,
-      sectionsTeaching: request.sectionsTeaching,
+      // Keep the legacy field for backward compatibility
+      sectionsTeaching: request.sectionsTeaching || [],
+      // Add the new teaching assignments field
+      teachingAssignments: request.teachingAssignments || [],
       isVerified: true, // Auto-verify faculty accounts
       passwordChangeRequired: true // Require password change on first login
     });

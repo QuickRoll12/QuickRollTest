@@ -11,8 +11,9 @@ const FacultyRequestForm = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [department, setDepartment] = useState('');
-  const [sectionsTeaching, setSectionsTeaching] = useState([]);
-  const [sectionInput, setSectionInput] = useState('');
+  const [teachingAssignments, setTeachingAssignments] = useState([]);
+  const [selectedSemester, setSelectedSemester] = useState('');
+  const [selectedSection, setSelectedSection] = useState('');
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -27,6 +28,7 @@ const FacultyRequestForm = () => {
   const navigate = useNavigate();
   
   const departments = ['BTech', 'BCA', 'BCom', 'BBA', 'Law', 'MCA', 'MBA', 'BPharm', 'BSc'];
+  const semesters = ['1', '2', '3', '4', '5', '6', '7', '8'];
   
   // Function to show notifications
   const showNotificationMessage = (message, type = 'error') => {
@@ -61,8 +63,8 @@ const FacultyRequestForm = () => {
       return false;
     }
 
-    if (sectionsTeaching.length === 0) {
-      showNotificationMessage('Please add at least one section that you teach', 'error');
+    if (teachingAssignments.length === 0) {
+      showNotificationMessage('Please add at least one semester-section combination that you teach', 'error');
       return false;
     }
 
@@ -109,26 +111,44 @@ const FacultyRequestForm = () => {
     }
   };
   
-  const handleAddSection = () => {
-    if (sectionInput.trim() === '') {
-      showNotificationMessage('Please select a section to add', 'error');
+  const handleAddAssignment = () => {
+    if (!selectedSemester) {
+      showNotificationMessage('Please select a semester', 'error');
       return;
     }
     
-    // Check if section already exists
-    if (sectionsTeaching.includes(sectionInput.trim())) {
-      showNotificationMessage('This section is already added', 'info');
-      setSectionInput('');
+    if (!selectedSection) {
+      showNotificationMessage('Please select a section', 'error');
       return;
     }
     
-    setSectionsTeaching([...sectionsTeaching, sectionInput.trim()]);
-    setSectionInput('');
-    showNotificationMessage('Section added successfully', 'success');
+    const newAssignment = {
+      semester: selectedSemester,
+      section: selectedSection
+    };
+    
+    // Check if this combination already exists
+    const exists = teachingAssignments.some(
+      assignment => assignment.semester === selectedSemester && assignment.section === selectedSection
+    );
+    
+    if (exists) {
+      showNotificationMessage('This semester-section combination is already added', 'info');
+      return;
+    }
+    
+    setTeachingAssignments([...teachingAssignments, newAssignment]);
+    setSelectedSemester('');
+    setSelectedSection('');
+    showNotificationMessage('Teaching assignment added successfully', 'success');
   };
   
-  const handleRemoveSection = (sectionToRemove) => {
-    setSectionsTeaching(sectionsTeaching.filter(section => section !== sectionToRemove));
+  const handleRemoveAssignment = (semesterToRemove, sectionToRemove) => {
+    setTeachingAssignments(
+      teachingAssignments.filter(
+        assignment => !(assignment.semester === semesterToRemove && assignment.section === sectionToRemove)
+      )
+    );
   };
   
   const handleSubmit = async (e) => {
@@ -148,10 +168,8 @@ const FacultyRequestForm = () => {
       formData.append('email', email.trim());
       formData.append('department', department);
       
-      // Add each section as a separate field with the same name
-      sectionsTeaching.forEach(section => {
-        formData.append('sectionsTeaching', section);
-      });
+      // Add teaching assignments (semester-section combinations)
+      formData.append('teachingAssignments', JSON.stringify(teachingAssignments));
       
       formData.append('photo', photo);
       
@@ -170,7 +188,9 @@ const FacultyRequestForm = () => {
       setName('');
       setEmail('');
       setDepartment('');
-      setSectionsTeaching([]);
+      setTeachingAssignments([]);
+      setSelectedSemester('');
+      setSelectedSection('');
       setPhoto(null);
       setPhotoPreview(null);
       
@@ -261,38 +281,59 @@ const FacultyRequestForm = () => {
             </div>
             
             <div className="form-group">
-              <label htmlFor="sections">Sections You Teach</label>
-              <div className="section-input-container">
-                <select
-                  id="sections"
-                  value={sectionInput}
-                  onChange={(e) => setSectionInput(e.target.value)}
-                  className="form-select"
-                >
-                  <option value="">Select a section</option>
-                  {availableSections.map(section => (
-                    <option key={section} value={section}>{section}</option>
-                  ))}
-                </select>
+              <label>Teaching Assignments</label>
+              <div className="teaching-assignment-container">
+                <div className="assignment-inputs">
+                  <div className="assignment-input-group">
+                    <label htmlFor="semester">Semester</label>
+                    <select
+                      id="semester"
+                      value={selectedSemester}
+                      onChange={(e) => setSelectedSemester(e.target.value)}
+                      className="form-select"
+                    >
+                      <option value="">Select Semester</option>
+                      {semesters.map(sem => (
+                        <option key={sem} value={sem}>Semester {sem}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="assignment-input-group">
+                    <label htmlFor="section">Section</label>
+                    <select
+                      id="section"
+                      value={selectedSection}
+                      onChange={(e) => setSelectedSection(e.target.value)}
+                      className="form-select"
+                    >
+                      <option value="">Select Section</option>
+                      {availableSections.map(section => (
+                        <option key={section} value={section}>{section}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
                 <button 
                   type="button" 
-                  className="add-section-btn"
-                  onClick={handleAddSection}
-                  disabled={!sectionInput}
+                  className="add-assignment-btn"
+                  onClick={handleAddAssignment}
+                  disabled={!selectedSemester || !selectedSection}
                 >
-                  Add
+                  Add Assignment
                 </button>
               </div>
               
-              {sectionsTeaching.length > 0 && (
-                <div className="sections-list">
-                  {sectionsTeaching.map((section, index) => (
-                    <div key={index} className="section-tag">
-                      {section}
+              {teachingAssignments.length > 0 && (
+                <div className="assignments-list">
+                  {teachingAssignments.map((assignment, index) => (
+                    <div key={index} className="assignment-tag">
+                      <span>Sem {assignment.semester} - {assignment.section}</span>
                       <button 
                         type="button"
-                        className="remove-section-btn"
-                        onClick={() => handleRemoveSection(section)}
+                        className="remove-assignment-btn"
+                        onClick={() => handleRemoveAssignment(assignment.semester, assignment.section)}
                       >
                         ×
                       </button>
@@ -301,7 +342,7 @@ const FacultyRequestForm = () => {
                 </div>
               )}
               
-              <p className="field-help-text">Add all sections that you teach. You will only be able to manage attendance for these sections.</p>
+              <p className="field-help-text">Add all semester-section combinations that you teach. You will only be able to manage attendance for these combinations.</p>
             </div>
             
             <div className="form-group">

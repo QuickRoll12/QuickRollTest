@@ -1,5 +1,17 @@
 const mongoose = require('mongoose');
 
+// Define the teaching assignment schema
+const TeachingAssignmentSchema = new mongoose.Schema({
+  semester: {
+    type: String,
+    required: true
+  },
+  section: {
+    type: String,
+    required: true
+  }
+}, { _id: false });
+
 const FacultyRequestSchema = new mongoose.Schema({
   name: { 
     type: String, 
@@ -14,14 +26,20 @@ const FacultyRequestSchema = new mongoose.Schema({
     type: String, 
     required: true 
   },
+  // Legacy field - kept for backward compatibility
   sectionsTeaching: {
     type: [String],
+    default: []
+  },
+  // New field for teaching assignments with semester-section combinations
+  teachingAssignments: {
+    type: [TeachingAssignmentSchema],
     required: true,
     validate: {
       validator: function(v) {
         return v && v.length > 0;
       },
-      message: 'At least one section must be specified'
+      message: 'At least one teaching assignment must be specified'
     }
   },
   photoUrl: { 
