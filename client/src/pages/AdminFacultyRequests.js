@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Modal } from 'react-bootstrap';
 import '../styles/AdminFacultyRequests.css';
 
 // Use environment variable directly instead of importing from config
@@ -286,91 +285,104 @@ const AdminFacultyRequests = () => {
         </div>
       )}
     
-      {/* Approval Modal */}
-      <Modal 
-        show={showApprovalModal} 
-        onHide={closeApprovalModal} 
-        centered 
-        className="approval-modal"
-        dialogClassName="modal-dialog-centered modal-lg"
-        aria-labelledby="approval-modal-title"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Review Teaching Assignments</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {currentRequest && (
-            <div>
-              <div className="faculty-info-card">
-                <div className="faculty-info-header">
-                  <h4>Faculty Information</h4>
-                </div>
-                <div className="faculty-info-content">
-                  <div className="info-row">
-                    <div className="info-label">Name:</div>
-                    <div className="info-value">{currentRequest.name}</div>
-                  </div>
-                  <div className="info-row">
-                    <div className="info-label">Email:</div>
-                    <div className="info-value">{currentRequest.email}</div>
-                  </div>
-                  <div className="info-row">
-                    <div className="info-label">Department:</div>
-                    <div className="info-value">{currentRequest.department}</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="assignment-selection">
-                <h5>Select Teaching Assignments to Approve:</h5>
-                <div className="selection-controls">
-                  <button onClick={selectAllAssignments} className="select-all-btn">Select All</button>
-                  <button onClick={deselectAllAssignments} className="deselect-all-btn">Deselect All</button>
-                </div>
-                
-                <div className="assignments-list">
-                  {currentRequest.teachingAssignments.map((assignment, index) => {
-                    const isSelected = selectedAssignments.some(
-                      item => item.semester === assignment.semester && item.section === assignment.section
-                    );
-                    
-                    return (
-                      <div key={index} className={`assignment-item ${isSelected ? 'selected' : ''}`}>
-                        <label className="assignment-checkbox">
-                          <input 
-                            type="checkbox" 
-                            checked={isSelected}
-                            onChange={() => toggleAssignment(assignment)}
-                          />
-                          <span className="checkbox-text">
-                            Semester {assignment.semester} - Section {assignment.section}
-                          </span>
-                        </label>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              
-              <div className="warning-message">
-                {selectedAssignments.length === 0 && (
-                  <p className="text-danger">Please select at least one teaching assignment to approve.</p>
-                )}
-              </div>
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <button onClick={closeApprovalModal} className="cancel-btn">Cancel</button>
-          <button 
-            onClick={() => currentRequest && handleApprove(currentRequest._id)} 
-            className="confirm-approve-btn"
-            disabled={selectedAssignments.length === 0 || actionLoading}
+      {/* Custom Approval Modal */}
+      {showApprovalModal && (
+        <div className="custom-modal-overlay" onClick={closeApprovalModal}>
+          <div 
+            className="custom-modal" 
+            onClick={(e) => e.stopPropagation()} 
+            aria-labelledby="approval-modal-title"
+            role="dialog"
+            aria-modal="true"
           >
-            {actionLoading ? 'Processing...' : 'Approve Selected'}
-          </button>
-        </Modal.Footer>
-      </Modal>
+            <div className="custom-modal-header">
+              <h3 id="approval-modal-title">Review Teaching Assignments</h3>
+              <button 
+                type="button" 
+                className="custom-modal-close" 
+                onClick={closeApprovalModal}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+            
+            <div className="custom-modal-body">
+              {currentRequest && (
+                <div>
+                  <div className="faculty-info-card">
+                    <div className="faculty-info-header">
+                      <h4>Faculty Information</h4>
+                    </div>
+                    <div className="faculty-info-content">
+                      <div className="info-row">
+                        <div className="info-label">Name:</div>
+                        <div className="info-value">{currentRequest.name}</div>
+                      </div>
+                      <div className="info-row">
+                        <div className="info-label">Email:</div>
+                        <div className="info-value">{currentRequest.email}</div>
+                      </div>
+                      <div className="info-row">
+                        <div className="info-label">Department:</div>
+                        <div className="info-value">{currentRequest.department}</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="assignment-selection">
+                    <h5>Select Teaching Assignments to Approve:</h5>
+                    <div className="selection-controls">
+                      <button onClick={selectAllAssignments} className="select-all-btn">Select All</button>
+                      <button onClick={deselectAllAssignments} className="deselect-all-btn">Deselect All</button>
+                    </div>
+                    
+                    <div className="assignments-list">
+                      {currentRequest.teachingAssignments.map((assignment, index) => {
+                        const isSelected = selectedAssignments.some(
+                          item => item.semester === assignment.semester && item.section === assignment.section
+                        );
+                        
+                        return (
+                          <div key={index} className={`assignment-item ${isSelected ? 'selected' : ''}`}>
+                            <label className="assignment-checkbox">
+                              <input 
+                                type="checkbox" 
+                                checked={isSelected}
+                                onChange={() => toggleAssignment(assignment)}
+                              />
+                              <span className="checkbox-text">
+                                Semester {assignment.semester} - Section {assignment.section}
+                              </span>
+                            </label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  <div className="warning-message">
+                    {selectedAssignments.length === 0 && (
+                      <p className="text-danger">Please select at least one teaching assignment to approve.</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="custom-modal-footer">
+              <button onClick={closeApprovalModal} className="cancel-btn">Cancel</button>
+              <button 
+                onClick={() => currentRequest && handleApprove(currentRequest._id)} 
+                className="confirm-approve-btn"
+                disabled={selectedAssignments.length === 0 || actionLoading}
+              >
+                {actionLoading ? 'Processing...' : 'Approve Selected'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
