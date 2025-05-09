@@ -618,26 +618,69 @@ const FacultyDashboard = () => {
                                     {row.map((cell, j) => (
                                         <div
                                             key={`${i}-${j}`}
-                                            style={{
-                                                width: '90px',
-                                                height: '90px',
-                                                border: '1px solid #ddd',
-                                                borderRadius: '10px',
-                                                margin: '2px',
-                                                display: 'flex',
-                                                fontSize : '31px',
-                                                flexDirection: 'column',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                backgroundColor: cell.used ? '#4caf50' : '#f5f5f5',
-                                                color: cell.used ? 'white' : '#333',
-                                                position: 'relative',
-                                                overflow: 'hidden',
-                                                cursor: 'pointer'
-                                            }}
                                             className="grid-cell"
                                         >
-                                            {/* Student info hover card */}
+                                            {/* Main cell content */}
+                                            <div
+                                                style={{
+                                                    width: '90px',
+                                                    height: '90px',
+                                                    border: '1px solid #ddd',
+                                                    borderRadius: '10px',
+                                                    margin: '2px',
+                                                    display: 'flex',
+                                                    fontSize: '31px',
+                                                    flexDirection: 'column',
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center',
+                                                    backgroundColor: cell.used ? '#4caf50' : '#f5f5f5',
+                                                    color: cell.used ? 'white' : '#333',
+                                                    position: 'relative',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                {cell.used && cell.photoFilename && (
+                                                    <div style={{
+                                                        width: '100%',
+                                                        height: '100%',
+                                                        position: 'absolute',
+                                                        top: 0,
+                                                        left: 0,
+                                                        zIndex: 1
+                                                    }}>
+                                                        <img 
+                                                            src={cell.cloudinaryUrl || `${BACKEND_URL}/api/photo-verification/${cell.photoFilename}`}
+                                                            alt="Student"
+                                                            style={{
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                objectFit: 'cover'
+                                                            }}
+                                                            onError={(e) => {
+                                                                e.target.onerror = null;
+                                                                e.target.src = 'https://via.placeholder.com/60?text=No+Photo';
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
+                                                <div style={{ fontSize: '31px', fontWeight: 'bold', zIndex: 2, position: 'relative' }}>
+                                                    {cell.code}
+                                                </div>
+                                                {cell.used && (
+                                                    <div style={{ 
+                                                        fontSize: '31px', 
+                                                        marginTop: '2px',
+                                                        color: cell.photoFilename ? 'white' : '#ffeb3b',
+                                                        fontWeight: 'bold',
+                                                        zIndex: 2,
+                                                        position: 'relative'
+                                                    }}>
+                                                        {cell.photoFilename ? 'Verified' : 'No Photo'}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Student info hover card - outside the main cell content to avoid overflow issues */}
                                             <div className="student-info-card">
                                                 {cell.used ? (
                                                     <div className="student-info-content">
@@ -654,43 +697,6 @@ const FacultyDashboard = () => {
                                                     </div>
                                                 )}
                                             </div>
-                                            
-                                            {cell.used && cell.photoFilename && (
-                                                <div style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    position: 'absolute',
-                                                    top: 0,
-                                                    left: 0,
-                                                }}>
-                                                    <img 
-                                                        src={cell.cloudinaryUrl || `${BACKEND_URL}/api/photo-verification/${cell.photoFilename}`}
-                                                        alt="Student"
-                                                        style={{
-                                                            width: '100%',
-                                                            height: '100%',
-                                                            objectFit: 'cover'
-                                                        }}
-                                                        onError={(e) => {
-                                                            e.target.onerror = null;
-                                                            e.target.src = 'https://via.placeholder.com/60?text=No+Photo';
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
-                                            <div style={{ fontSize: '31px', fontWeight: 'bold' }}>
-                                                {cell.code}
-                                            </div>
-                                            {cell.used && (
-                                                <div style={{ 
-                                                    fontSize: '31px', 
-                                                    marginTop: '2px',
-                                                    color: cell.photoFilename ? 'white' : '#ffeb3b',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    {cell.photoFilename ? 'Verified' : 'No Photo'}
-                                                </div>
-                                            )}
                                         </div>
                                     ))}
                                 </div>

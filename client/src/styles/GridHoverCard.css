@@ -1,6 +1,7 @@
 /* Grid Hover Card Styles */
 .grid-cell {
     position: relative;
+    display: inline-block;
   }
   
   .student-info-card {
@@ -12,17 +13,50 @@
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     padding: 15px;
-    z-index: 100;
+    z-index: 1000; /* Increased z-index to ensure it's on top */
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.2s ease, visibility 0.2s ease;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
     pointer-events: none;
-    transform: translateY(-30%);
+    margin-left: 10px;
   }
   
   .grid-cell:hover .student-info-card {
     opacity: 1;
     visibility: visible;
+  }
+  
+  .student-info-content {
+    color: #333;
+  }
+  
+  .student-info-content h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: #2196f3;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+  }
+  
+  .student-info-content p {
+    margin: 5px 0;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  .student-info-content .verified {
+    color: #4caf50;
+    font-weight: bold;
+  }
+  
+  /* Adjust position for cells on the right side of the grid */
+  .grid-cell:nth-child(10n+8) .student-info-card,
+  .grid-cell:nth-child(10n+9) .student-info-card,
+  .grid-cell:nth-child(10n+10) .student-info-card {
+    left: auto;
+    right: 100%;
+    margin-left: 0;
+    margin-right: 10px;
   }
   
   .student-info-content {
