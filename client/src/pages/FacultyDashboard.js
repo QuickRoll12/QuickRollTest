@@ -661,6 +661,7 @@ const FacultyDashboard = () => {
                                                     position: 'absolute',
                                                     top: 0,
                                                     left: 0,
+                                                    zIndex: 1,
                                                 }}>
                                                     <img 
                                                         src={cell.cloudinaryUrl || `${BACKEND_URL}/api/photo-verification/${cell.photoFilename}`}
