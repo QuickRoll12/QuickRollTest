@@ -5,8 +5,9 @@
   }
   
   .student-info-card {
-    position: fixed; /* Changed from absolute to fixed to prevent container overflow */
-    transform: translateY(-50%); /* Center vertically */
+    position: absolute;
+    top: -20px;
+    left: 100%;
     width: 250px;
     background-color: white;
     border-radius: 8px;
@@ -17,6 +18,7 @@
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
     pointer-events: none;
+    margin-left: 10px;
   }
   
   .grid-cell:hover .student-info-card {
