@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import io from "socket.io-client";
 import '../styles/notifications.css';
+import '../styles/GridHoverCard.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
 
@@ -631,9 +632,29 @@ const FacultyDashboard = () => {
                                                 backgroundColor: cell.used ? '#4caf50' : '#f5f5f5',
                                                 color: cell.used ? 'white' : '#333',
                                                 position: 'relative',
-                                                overflow: 'hidden'
+                                                overflow: 'hidden',
+                                                cursor: 'pointer'
                                             }}
+                                            className="grid-cell"
                                         >
+                                            {/* Student info hover card */}
+                                            <div className="student-info-card">
+                                                {cell.used ? (
+                                                    <div className="student-info-content">
+                                                        <h3>Student Information</h3>
+                                                        <p><strong>Name:</strong> {cell.studentName || 'N/A'}</p>
+                                                        <p><strong>Roll Number:</strong> {cell.studentRoll || 'N/A'}</p>
+                                                        <p><strong>Section:</strong> {selectedSection}</p>
+                                                        <p><strong>Email:</strong> {cell.studentEmail || 'N/A'}</p>
+                                                        <p><strong>Status:</strong> <span className="verified">{cell.photoFilename ? 'Verified' : 'No Photo'}</span></p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="student-info-content">
+                                                        <p>Not used</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            
                                             {cell.used && cell.photoFilename && (
                                                 <div style={{
                                                     width: '100%',
