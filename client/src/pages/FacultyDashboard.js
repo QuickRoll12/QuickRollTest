@@ -688,7 +688,6 @@ const FacultyDashboard = () => {
                                                     color: cell.photoFilename ? 'white' : '#ffeb3b',
                                                     fontWeight: 'bold',
                                                     position: 'relative',
-                                                    zIndex: 2
                                                 }}>
                                                     {cell.photoFilename ? 'Verified' : 'No Photo'}
                                                 </div>
