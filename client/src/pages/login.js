@@ -331,7 +331,7 @@ const Login = () => {
 
               <div className="switch-form">
                 {userType === 'student' ? (
-                  <>New user? <Link to="/signup">Create an account</Link></>
+                  <>New user? <Link to="/">Creating Account is disabled !</Link></>
                 ) : (
                   <>Need a faculty account? <Link to="/faculty-request">Request Faculty Account</Link></>
                 )}
