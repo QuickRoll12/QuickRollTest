@@ -15,6 +15,64 @@ const AdminDataUpload = () => {
   const [uploadStats, setUploadStats] = useState(null);
   const [fileName, setFileName] = useState('');
 
+  // Generate and download sample Excel template
+  const generateAndDownloadTemplate = () => {
+    // Create sample data with required headers
+    const sampleData = [
+      {
+        name: 'John Doe',
+        email: 'johndoe@example.com',
+        studentId: 'STU123456',
+        course: 'BTech',
+        section: 'A1',
+        semester: '3',
+        classRollNumber: '01',
+        universityRollNumber: '12345678',
+        photo_url: 'https://example.com/photo.jpg' // Optional
+      },
+      {
+        name: 'Jane Smith',
+        email: 'janesmith@example.com',
+        studentId: 'STU123457',
+        course: 'BCA',
+        section: 'B2',
+        semester: '4',
+        classRollNumber: '02',
+        universityRollNumber: '12345679',
+        photo_url: '' // Optional
+      }
+    ];
+
+    // Create a new workbook
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(sampleData);
+    
+    // Add the worksheet to the workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Student Data');
+    
+    // Generate Excel file
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    
+    // Create a Blob from the buffer
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    
+    // Create a download link
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'student_data_template.xlsx';
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    setSuccess('Sample template downloaded successfully');
+  };
+
   // Handle file selection
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -148,21 +206,17 @@ const AdminDataUpload = () => {
       </div>
 
       <div className="upload-card">
-        <div className="upload-instructions">
-          <h3>Instructions</h3>
-          <p>Upload an Excel file (.xlsx or .xls) with the following student information:</p>
-          <ul>
-            <li><strong>name</strong> - Full name of the student</li>
-            <li><strong>email</strong> - Email address (must be unique)</li>
-            <li><strong>studentId</strong> - Student ID number</li>
-            <li><strong>course</strong> - Course name</li>
-            <li><strong>section</strong> - Section name</li>
-            <li><strong>department</strong> - Semester</li>
-            <li><strong>classRollNumber</strong> - Class roll number</li>
-            <li><strong>universityRollNumber</strong> - University roll number</li>
-            <li><strong>photo_url</strong> - URL to student's photo (optional)</li>
-          </ul>
-          <p>All students will be created with the role 'student' and will be required to change their password on first login.</p>
+        <div className="sample-template-section">
+          <div className="sample-template-header">
+            <h3>Download Sample Excel Template</h3>
+            <p>Use this template with the required headers for student data upload:</p>
+            <button 
+              className="download-template-button" 
+              onClick={generateAndDownloadTemplate}
+            >
+              <i className="fas fa-download"></i> Download Sample Template
+            </button>
+          </div>
         </div>
 
         <div className="file-upload-section">
