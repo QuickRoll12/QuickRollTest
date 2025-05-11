@@ -1022,23 +1022,28 @@ const styles = {
     },
     gridContainer: {
         backgroundColor: '#ffffff',
-        padding: '10px',
+        padding: '20px',
         borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         marginBottom: '30px',
-        width: '100%',
-        overflowX: 'auto',
+        width: '80%',  // Match the width of the control panel
+        margin: '0 auto',  // Center the grid container
+        overflowX: 'hidden',  // Prevent horizontal scrolling
+        overflowY: 'hidden',  // Prevent vertical scrolling
     },
     grid: {
-        display: 'grid',
-        gap: '8px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '10px',
         width: '100%',
-        minWidth: 'fit-content',
     },
     row: {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(13, minmax(60px, 1fr))',
-        gap: '8px',
+        display: 'flex',
+        justifyContent: 'center',
+        flexWrap: 'nowrap',
+        gap: '10px',
         width: '100%',
     },
     sessionStats: {
