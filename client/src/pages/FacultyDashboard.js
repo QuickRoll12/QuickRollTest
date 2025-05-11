@@ -506,6 +506,7 @@ const FacultyDashboard = () => {
                             <table style={styles.assignmentsTable}>
                                 <thead>
                                     <tr>
+                                        <th style={styles.tableHeader}>Select</th>
                                         <th style={styles.tableHeader}>Department</th>
                                         <th style={styles.tableHeader}>Semester</th>
                                         <th style={styles.tableHeader}>Section</th>
@@ -513,75 +514,80 @@ const FacultyDashboard = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {availableTeachingAssignments.map((assignment, index) => (
-                                        <tr 
-                                            key={index}
-                                            style={{
-                                                ...styles.tableRow,
-                                                backgroundColor: 
-                                                    selectedDepartment === user.department && 
-                                                    selectedSemester === assignment.semester && 
-                                                    selectedSection === assignment.section 
-                                                        ? '#e8f5e9' 
-                                                        : 'transparent',
-                                                cursor: sessionActive ? 'not-allowed' : 'pointer'
-                                            }}
-                                            onClick={() => {
-                                                if (!sessionActive) {
-                                                    setSelectedDepartment(user.department);
-                                                    setSelectedSemester(assignment.semester);
-                                                    setSelectedSection(assignment.section);
-                                                }
-                                            }}
-                                        >
-                                            <td style={styles.tableCell}>{user.department}</td>
-                                            <td style={styles.tableCell}>{assignment.semester}</td>
-                                            <td style={styles.tableCell}>{assignment.section}</td>
-                                            <td style={styles.tableCell}>
-                                                {attendanceType === 'roll' && (
-                                                    <input
-                                                        type="number"
-                                                        value={
-                                                            selectedDepartment === user.department && 
-                                                            selectedSemester === assignment.semester && 
-                                                            selectedSection === assignment.section 
-                                                                ? totalStudents 
-                                                                : ''
-                                                        }
-                                                        onChange={(e) => {
-                                                            if (selectedDepartment === user.department && 
-                                                                selectedSemester === assignment.semester && 
-                                                                selectedSection === assignment.section) {
-                                                                setTotalStudents(e.target.value);
-                                                            }
-                                                        }}
-                                                        onClick={(e) => {
-                                                            // Prevent the row click event from triggering
-                                                            e.stopPropagation();
-                                                            // Select this row if not already selected
-                                                            if (!sessionActive && (
-                                                                selectedDepartment !== user.department ||
-                                                                selectedSemester !== assignment.semester ||
-                                                                selectedSection !== assignment.section
-                                                            )) {
-                                                                setSelectedDepartment(user.department);
-                                                                setSelectedSemester(assignment.semester);
-                                                                setSelectedSection(assignment.section);
-                                                            }
-                                                        }}
-                                                        style={styles.tableInput}
-                                                        placeholder="Enter total"
-                                                        min="1"
-                                                        disabled={sessionActive}
-                                                    />
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {availableTeachingAssignments.map((assignment, index) => {
+                                        const isSelected = 
+                                            selectedDepartment === user.department && 
+                                            selectedSemester === assignment.semester && 
+                                            selectedSection === assignment.section;
+                                            
+                                        return (
+                                            <tr 
+                                                key={index}
+                                                style={{
+                                                    ...styles.tableRow,
+                                                    backgroundColor: isSelected ? '#e8f5e9' : 'transparent',
+                                                    cursor: sessionActive ? 'not-allowed' : 'pointer',
+                                                    border: isSelected ? '1px solid #4caf50' : '1px solid #eee'
+                                                }}
+                                                onClick={() => {
+                                                    if (!sessionActive) {
+                                                        setSelectedDepartment(user.department);
+                                                        setSelectedSemester(assignment.semester);
+                                                        setSelectedSection(assignment.section);
+                                                    }
+                                                }}
+                                            >
+                                                <td style={styles.checkboxCell}>
+                                                    <div style={{
+                                                        ...styles.customCheckbox,
+                                                        backgroundColor: isSelected ? '#4caf50' : 'transparent',
+                                                        border: isSelected ? '2px solid #4caf50' : '2px solid #ccc'
+                                                    }}>
+                                                        {isSelected && <span style={styles.checkmark}>✓</span>}
+                                                    </div>
+                                                </td>
+                                                <td style={styles.tableCell}>{user.department}</td>
+                                                <td style={styles.tableCell}>{assignment.semester}</td>
+                                                <td style={styles.tableCell}>{assignment.section}</td>
+                                                <td style={styles.tableCell}>
+                                                    {attendanceType === 'roll' && (
+                                                        <input
+                                                            type="number"
+                                                            value={isSelected ? totalStudents : ''}
+                                                            onChange={(e) => {
+                                                                if (isSelected) {
+                                                                    setTotalStudents(e.target.value);
+                                                                }
+                                                            }}
+                                                            onClick={(e) => {
+                                                                // Prevent the row click event from triggering
+                                                                e.stopPropagation();
+                                                                // Select this row if not already selected
+                                                                if (!sessionActive && !isSelected) {
+                                                                    setSelectedDepartment(user.department);
+                                                                    setSelectedSemester(assignment.semester);
+                                                                    setSelectedSection(assignment.section);
+                                                                }
+                                                            }}
+                                                            style={{
+                                                                ...styles.tableInput,
+                                                                borderColor: isSelected ? '#4caf50' : '#ddd',
+                                                                backgroundColor: isSelected ? '#f0fff1' : '#fff'
+                                                            }}
+                                                            placeholder="Enter total"
+                                                            min="1"
+                                                            disabled={sessionActive}
+                                                        />
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
                     </div>
+
                     <div style={styles.buttonGroup}>
                         <button
                             onClick={sessionActive ? endSession : startSession}
@@ -645,9 +651,28 @@ const FacultyDashboard = () => {
                                                 backgroundColor: cell.used ? '#4caf50' : '#f5f5f5',
                                                 color: cell.used ? 'white' : '#333',
                                                 position: 'relative',
-                                                cursor: 'pointer'
+                                                cursor: 'pointer',
+                                                overflow: 'visible' /* Ensure the hover card is visible */
                                             }}
                                             className="grid-cell"
+                                            onMouseEnter={(e) => {
+                                                // Get the hover card element
+                                                const hoverCard = e.currentTarget.querySelector('.student-info-card');
+                                                if (hoverCard) {
+                                                    // Get the position of the cell
+                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                    // Position the hover card next to the cell
+                                                    hoverCard.style.left = `${rect.right + 10}px`;
+                                                    hoverCard.style.top = `${rect.top + rect.height/2}px`;
+                                                    
+                                                    // Check if the hover card would go off the right edge of the screen
+                                                    const hoverCardRect = hoverCard.getBoundingClientRect();
+                                                    if (hoverCardRect.right > window.innerWidth) {
+                                                        // Position the hover card to the left of the cell instead
+                                                        hoverCard.style.left = `${rect.left - hoverCardRect.width - 10}px`;
+                                                    }
+                                                }
+                                            }}
                                         >
                                             {/* Student info hover card */}
                                             <div className="student-info-card">
@@ -674,7 +699,6 @@ const FacultyDashboard = () => {
                                                     position: 'absolute',
                                                     top: 0,
                                                     left: 0,
-                                                    zIndex: 1,
                                                 }}>
                                                     <img 
                                                         src={cell.cloudinaryUrl || `${BACKEND_URL}/api/photo-verification/${cell.photoFilename}`}
@@ -691,7 +715,7 @@ const FacultyDashboard = () => {
                                                     />
                                                 </div>
                                             )}
-                                            <div style={{ fontSize: '31px', fontWeight: 'bold', position: 'relative' }}>
+                                            <div style={{ fontSize: '31px', fontWeight: 'bold', position: 'relative', zIndex: 2 }}>
                                                 {cell.code}
                                             </div>
                                             {cell.used && (
@@ -701,6 +725,7 @@ const FacultyDashboard = () => {
                                                     color: cell.photoFilename ? 'white' : '#ffeb3b',
                                                     fontWeight: 'bold',
                                                     position: 'relative',
+                                                    zIndex: 2
                                                 }}>
                                                     {cell.photoFilename ? 'Verified' : 'No Photo'}
                                                 </div>
@@ -841,58 +866,89 @@ const styles = {
         flex: 1,
         fontWeight: 'bold',
         transition: 'background-color 0.3s',
-        '&:hover': {
-            backgroundColor: '#f0f0f0',
-            color: 'black'
-        }
+        color: 'black'
     },
     // New styles for the table-based UI
     assignmentsTableContainer: {
         marginBottom: '20px',
-        width: '100%'
+        width: '90%',  // Increased width
+        maxWidth: '900px',  // Added max-width for better appearance
+        margin: '0 auto 20px'  // Center the container
     },
     tableTitle: {
-        fontSize: '18px',
-        marginBottom: '5px',
-        color: '#333'
+        fontSize: '20px',  // Increased font size
+        marginBottom: '8px',
+        color: '#333',
+        fontWeight: 'bold'
     },
     tableSubtitle: {
         fontSize: '14px',
         color: '#666',
-        marginBottom: '15px'
+        marginBottom: '20px'  // Increased margin
     },
     tableWrapper: {
         overflowX: 'auto',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        borderRadius: '8px'
+        boxShadow: '0 3px 10px rgba(0, 0, 0, 0.15)',  // Enhanced shadow
+        borderRadius: '10px',  // Increased border radius
+        border: '1px solid #e0e0e0'  // Added border
     },
     assignmentsTable: {
         width: '100%',
-        borderCollapse: 'collapse',
+        borderCollapse: 'separate',  // Changed to separate for better borders
+        borderSpacing: '0',
         backgroundColor: '#fff'
     },
     tableHeader: {
-        padding: '12px 15px',
+        padding: '15px 20px',  // Increased padding
         textAlign: 'left',
         backgroundColor: '#f5f5f5',
-        borderBottom: '1px solid #ddd',
+        borderBottom: '2px solid #ddd',  // Thicker border
         color: '#333',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        fontSize: '15px'  // Increased font size
     },
     tableRow: {
         borderBottom: '1px solid #eee',
-        transition: 'background-color 0.2s'
+        transition: 'all 0.3s ease',  // Enhanced transition
+        '&:hover': {
+            backgroundColor: '#f9f9f9'  // Hover effect
+        }
     },
     tableCell: {
-        padding: '12px 15px',
-        textAlign: 'left'
+        padding: '15px 20px',  // Increased padding
+        textAlign: 'left',
+        fontSize: '14px'  // Specified font size
     },
     tableInput: {
         width: '100%',
-        padding: '8px 10px',
+        padding: '10px 12px',  // Increased padding
         border: '1px solid #ddd',
+        borderRadius: '6px',  // Increased border radius
+        boxSizing: 'border-box',
+        fontSize: '14px',  // Specified font size
+        transition: 'all 0.3s ease'  // Added transition
+    },
+    // New styles for checkbox
+    checkboxCell: {
+        padding: '15px 10px 15px 20px',
+        textAlign: 'center',
+        width: '60px'
+    },
+    customCheckbox: {
+        width: '22px',
+        height: '22px',
         borderRadius: '4px',
-        boxSizing: 'border-box'
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: '0 auto',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease'
+    },
+    checkmark: {
+        color: 'white',
+        fontSize: '16px',
+        fontWeight: 'bold'
     },
     title: {
         fontSize: '32px',
