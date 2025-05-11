@@ -974,8 +974,8 @@ const styles = {
         borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         marginBottom: '10px',
-        width: '90%',
-        maxWidth: '600px',
+        width: '80%',
+        maxWidth: '100%',
         margin: '0 auto 20px auto',
     },
     formGroup: {
