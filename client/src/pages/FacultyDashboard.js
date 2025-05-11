@@ -658,17 +658,26 @@ const FacultyDashboard = () => {
                                                 // Get the hover card element
                                                 const hoverCard = e.currentTarget.querySelector('.student-info-card');
                                                 if (hoverCard) {
-                                                    // Get the position of the cell
-                                                    const rect = e.currentTarget.getBoundingClientRect();
-                                                    // Position the hover card next to the cell
-                                                    hoverCard.style.left = `${rect.right + 10}px`;
-                                                    hoverCard.style.top = `${rect.top + rect.height/2}px`;
-                                                    
-                                                    // Check if the hover card would go off the right edge of the screen
-                                                    const hoverCardRect = hoverCard.getBoundingClientRect();
-                                                    if (hoverCardRect.right > window.innerWidth) {
-                                                        // Position the hover card to the left of the cell instead
-                                                        hoverCard.style.left = `${rect.left - hoverCardRect.width - 10}px`;
+                                                    // Get the grid container
+                                                    const gridContainer = document.querySelector('[style*="gridContainer"]');
+                                                    if (gridContainer) {
+                                                        const gridRect = gridContainer.getBoundingClientRect();
+                                                        const cellRect = e.currentTarget.getBoundingClientRect();
+                                                        
+                                                        // Check if the cell is near the right edge of the grid container
+                                                        if (cellRect.right + 270 > gridRect.right) { // 270 = hover card width + margin
+                                                            // Position the hover card to the left of the cell
+                                                            hoverCard.style.left = 'auto';
+                                                            hoverCard.style.right = '100%';
+                                                            hoverCard.style.marginLeft = '0';
+                                                            hoverCard.style.marginRight = '10px';
+                                                        } else {
+                                                            // Position the hover card to the right of the cell (default)
+                                                            hoverCard.style.left = '100%';
+                                                            hoverCard.style.right = 'auto';
+                                                            hoverCard.style.marginLeft = '10px';
+                                                            hoverCard.style.marginRight = '0';
+                                                        }
                                                     }
                                                 }
                                             }}
@@ -1028,8 +1037,8 @@ const styles = {
         marginBottom: '30px',
         width: '80%',  // Match the width of the control panel
         margin: '0 auto',  // Center the grid container
-        overflowX: 'hidden',  // Prevent horizontal scrolling
-        overflowY: 'hidden',  // Prevent vertical scrolling
+        overflow: 'visible',  // Allow hover cards to be visible outside the container
+        position: 'relative',  // Establish positioning context
     },
     grid: {
         display: 'flex',
