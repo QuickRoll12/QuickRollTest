@@ -498,77 +498,90 @@ const FacultyDashboard = () => {
                         </div>
                     </div>
 
-                    <div style={styles.formGroup}>
-                        <label style={styles.label}>Department:</label>
-                        <select 
-                            value={selectedDepartment}
-                            onChange={(e) => setSelectedDepartment(e.target.value)}
-                            style={styles.select}
-                            disabled={sessionActive}
-                        >
-                            <option value="">Select Department</option>
-                            {departments.map(dept => (
-                                <option key={dept} value={dept}>{dept}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div style={styles.formGroup}>
-                        <label style={styles.label}>Semester:</label>
-                        <select 
-                            value={selectedSemester}
-                            onChange={(e) => {
-                                const newSemester = e.target.value;
-                                setSelectedSemester(newSemester);
-                                // Clear section when semester changes
-                                setSelectedSection('');
-                            }}
-                            style={styles.select}
-                            disabled={sessionActive}
-                        >
-                            <option value="">Select Semester</option>
-                            {/* Only show semesters that the faculty teaches */}
-                            {Object.keys(availableSemesterSections).length > 0 && 
-                                Object.keys(availableSemesterSections).sort().map(sem => (
-                                    <option key={sem} value={sem}>Sem: {sem}</option>
-                                ))
-                            }
-                        </select>
-                    </div>
-
-                    <div style={styles.formGroup}>
-                        <label style={styles.label}>Section:</label>
-                        <select 
-                            value={selectedSection}
-                            onChange={(e) => setSelectedSection(e.target.value)}
-                            style={styles.select}
-                            disabled={sessionActive}
-                        >
-                            <option value="">Select Section</option>
-                            {selectedSemester && availableSemesterSections[selectedSemester] && 
-                                // Show only sections for the selected semester
-                                availableSemesterSections[selectedSemester].map((section) => (
-                                    <option key={section} value={section}>{section}</option>
-                                ))
-                            }
-                        </select>
-                    </div>
-
-                    {attendanceType === 'roll' && (
-                        <div style={styles.formGroup}>
-                            <label style={styles.label}>Total Students:</label>
-                            <input
-                                type="number"
-                                value={totalStudents}
-                                onChange={(e) => setTotalStudents(e.target.value)}
-                                style={styles.input}
-                                placeholder="Enter total number of students"
-                                min="1"
-                                disabled={sessionActive}
-                            />
+                    <div style={styles.assignmentsTableContainer}>
+                        <h3 style={styles.tableTitle}>Your Teaching Assignments</h3>
+                        <p style={styles.tableSubtitle}>Click on a row to select a class for attendance</p>
+                        
+                        <div style={styles.tableWrapper}>
+                            <table style={styles.assignmentsTable}>
+                                <thead>
+                                    <tr>
+                                        <th style={styles.tableHeader}>Department</th>
+                                        <th style={styles.tableHeader}>Semester</th>
+                                        <th style={styles.tableHeader}>Section</th>
+                                        <th style={styles.tableHeader}>Total Students</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {availableTeachingAssignments.map((assignment, index) => (
+                                        <tr 
+                                            key={index}
+                                            style={{
+                                                ...styles.tableRow,
+                                                backgroundColor: 
+                                                    selectedDepartment === user.department && 
+                                                    selectedSemester === assignment.semester && 
+                                                    selectedSection === assignment.section 
+                                                        ? '#e8f5e9' 
+                                                        : 'transparent',
+                                                cursor: sessionActive ? 'not-allowed' : 'pointer'
+                                            }}
+                                            onClick={() => {
+                                                if (!sessionActive) {
+                                                    setSelectedDepartment(user.department);
+                                                    setSelectedSemester(assignment.semester);
+                                                    setSelectedSection(assignment.section);
+                                                }
+                                            }}
+                                        >
+                                            <td style={styles.tableCell}>{user.department}</td>
+                                            <td style={styles.tableCell}>{assignment.semester}</td>
+                                            <td style={styles.tableCell}>{assignment.section}</td>
+                                            <td style={styles.tableCell}>
+                                                {attendanceType === 'roll' && (
+                                                    <input
+                                                        type="number"
+                                                        value={
+                                                            selectedDepartment === user.department && 
+                                                            selectedSemester === assignment.semester && 
+                                                            selectedSection === assignment.section 
+                                                                ? totalStudents 
+                                                                : ''
+                                                        }
+                                                        onChange={(e) => {
+                                                            if (selectedDepartment === user.department && 
+                                                                selectedSemester === assignment.semester && 
+                                                                selectedSection === assignment.section) {
+                                                                setTotalStudents(e.target.value);
+                                                            }
+                                                        }}
+                                                        onClick={(e) => {
+                                                            // Prevent the row click event from triggering
+                                                            e.stopPropagation();
+                                                            // Select this row if not already selected
+                                                            if (!sessionActive && (
+                                                                selectedDepartment !== user.department ||
+                                                                selectedSemester !== assignment.semester ||
+                                                                selectedSection !== assignment.section
+                                                            )) {
+                                                                setSelectedDepartment(user.department);
+                                                                setSelectedSemester(assignment.semester);
+                                                                setSelectedSection(assignment.section);
+                                                            }
+                                                        }}
+                                                        style={styles.tableInput}
+                                                        placeholder="Enter total"
+                                                        min="1"
+                                                        disabled={sessionActive}
+                                                    />
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
-                    )}
-
+                    </div>
                     <div style={styles.buttonGroup}>
                         <button
                             onClick={sessionActive ? endSession : startSession}
@@ -832,6 +845,54 @@ const styles = {
             backgroundColor: '#f0f0f0',
             color: 'black'
         }
+    },
+    // New styles for the table-based UI
+    assignmentsTableContainer: {
+        marginBottom: '20px',
+        width: '100%'
+    },
+    tableTitle: {
+        fontSize: '18px',
+        marginBottom: '5px',
+        color: '#333'
+    },
+    tableSubtitle: {
+        fontSize: '14px',
+        color: '#666',
+        marginBottom: '15px'
+    },
+    tableWrapper: {
+        overflowX: 'auto',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        borderRadius: '8px'
+    },
+    assignmentsTable: {
+        width: '100%',
+        borderCollapse: 'collapse',
+        backgroundColor: '#fff'
+    },
+    tableHeader: {
+        padding: '12px 15px',
+        textAlign: 'left',
+        backgroundColor: '#f5f5f5',
+        borderBottom: '1px solid #ddd',
+        color: '#333',
+        fontWeight: 'bold'
+    },
+    tableRow: {
+        borderBottom: '1px solid #eee',
+        transition: 'background-color 0.2s'
+    },
+    tableCell: {
+        padding: '12px 15px',
+        textAlign: 'left'
+    },
+    tableInput: {
+        width: '100%',
+        padding: '8px 10px',
+        border: '1px solid #ddd',
+        borderRadius: '4px',
+        boxSizing: 'border-box'
     },
     title: {
         fontSize: '32px',
