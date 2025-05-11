@@ -499,7 +499,6 @@ const FacultyDashboard = () => {
                     </div>
 
                     <div style={styles.assignmentsTableContainer}>
-                        <h3 style={styles.tableTitle}>Your Teaching Assignments</h3>
                         <p style={styles.tableSubtitle}>Click on a row to select a class for attendance</p>
                         
                         <div style={styles.tableWrapper}>
