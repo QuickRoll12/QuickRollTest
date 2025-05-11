@@ -723,7 +723,7 @@ const FacultyDashboard = () => {
                                                     />
                                                 </div>
                                             )}
-                                            <div style={{ fontSize: '31px', fontWeight: 'bold', position: 'relative', zIndex: 2 }}>
+                                            <div style={{ fontSize: '31px', fontWeight: 'bold', position: 'relative' }}>
                                                 {cell.code}
                                             </div>
                                             {cell.used && (
