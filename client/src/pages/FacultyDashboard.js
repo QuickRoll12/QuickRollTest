@@ -499,7 +499,6 @@ const FacultyDashboard = () => {
                     </div>
 
                     <div style={styles.assignmentsTableContainer}>
-                        <h3 style={styles.tableTitle}>Your Teaching Assignments</h3>
                         <p style={styles.tableSubtitle}>Click on a row to select a class for attendance</p>
                         
                         <div style={styles.tableWrapper}>
@@ -871,9 +870,9 @@ const styles = {
     // New styles for the table-based UI
     assignmentsTableContainer: {
         marginBottom: '20px',
-        width: '80%',  // Set to 80% of screen width as requested
-        margin: '0 auto 20px',  // Center the container
-        minWidth: '750px'  // Ensure minimum width for smaller screens
+        width: '90%',  // Increased width
+        maxWidth: '900px',  // Added max-width for better appearance
+        margin: '0 auto 20px'  // Center the container
     },
     tableTitle: {
         fontSize: '20px',  // Increased font size
@@ -974,8 +973,8 @@ const styles = {
         borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         marginBottom: '10px',
-        width: '60%',
-        maxWidth: '600px',
+        width: '80%',
+        maxWidth: '100%',
         margin: '0 auto 20px auto',
     },
     formGroup: {
