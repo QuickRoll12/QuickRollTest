@@ -974,7 +974,7 @@ const styles = {
         borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         marginBottom: '10px',
-        width: '60%',
+        width: '90%',
         maxWidth: '600px',
         margin: '0 auto 20px auto',
     },
