@@ -871,9 +871,9 @@ const styles = {
     // New styles for the table-based UI
     assignmentsTableContainer: {
         marginBottom: '20px',
-        width: '90%',  // Increased width
-        maxWidth: '900px',  // Added max-width for better appearance
-        margin: '0 auto 20px'  // Center the container
+        width: '80%',  // Set to 80% of screen width as requested
+        margin: '0 auto 20px',  // Center the container
+        minWidth: '750px'  // Ensure minimum width for smaller screens
     },
     tableTitle: {
         fontSize: '20px',  // Increased font size
