@@ -1035,7 +1035,7 @@ const styles = {
         borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         marginBottom: '30px',
-        width: '80%',  // Match the width of the control panel
+        width: '100%',  // Match the width of the control panel
         margin: '0 auto',  // Center the grid container
         overflow: 'visible',  // Allow hover cards to be visible outside the container
         position: 'relative',  // Establish positioning context
