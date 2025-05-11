@@ -499,6 +499,7 @@ const FacultyDashboard = () => {
                     </div>
 
                     <div style={styles.assignmentsTableContainer}>
+                        <h3 style={styles.tableTitle}>Your Teaching Assignments</h3>
                         <p style={styles.tableSubtitle}>Click on a row to select a class for attendance</p>
                         
                         <div style={styles.tableWrapper}>
@@ -973,8 +974,8 @@ const styles = {
         borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         marginBottom: '10px',
-        width: '80%',
-        maxWidth: '100%',
+        width: '60%',
+        maxWidth: '600px',
         margin: '0 auto 20px auto',
     },
     formGroup: {
