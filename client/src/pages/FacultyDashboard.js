@@ -947,7 +947,7 @@ const styles = {
     subtitle: {
         fontSize: '18px',
         fontWeight: 'bold',
-        marginBottom: '15px',
+        marginBottom: '5px',
         color: '#283593',
     },
     controlPanel: {
@@ -1015,13 +1015,13 @@ const styles = {
         position: 'relative',  // Establish positioning context
     },
     gridCell: {
-        width: 'clamp(60px, 5vw, 90px)',  // Responsive width with min/max constraints
-        height: 'clamp(60px, 5vw, 90px)',  // Responsive height with min/max constraints
+        width: 'clamp(60px, 6vw, 90px)',  // Responsive width with min/max constraints
+        height: 'clamp(60px, 6vw, 90px)',  // Responsive height with min/max constraints
         border: 'clamp(1px, 0.1vw, 2px) solid #ddd',  // Responsive border
         borderRadius: 'clamp(5px, 0.5vw, 10px)',  // Responsive border radius
         margin: 'clamp(1px, 0.2vw, 2px)',  // Responsive margin
         display: 'flex',
-        fontSize: 'clamp(20px, 2vw, 31px)',  // Responsive font size
+        fontSize: 'clamp(20px, 3vw, 31px)',  // Responsive font size
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
@@ -1037,12 +1037,12 @@ const styles = {
         color: '#333',
     },
     gridCellCode: {
-        fontSize: 'clamp(20px, 2vw, 31px)',
+        fontSize: 'clamp(20px, 3vw, 31px)',
         fontWeight: 'bold',
         position: 'relative',
     },
     gridCellVerification: {
-        fontSize: 'clamp(12px, 1.5vw, 20px)',
+        fontSize: 'clamp(12px, 2vw, 20px)',
         marginTop: 'clamp(1px, 0.2vw, 2px)',
         fontWeight: 'bold',
         position: 'relative',
@@ -1057,6 +1057,7 @@ const styles = {
         width: '100%',
         height: '100%',
         position: 'absolute',
+        borderRadius: 'clamp(5px, 0.5vw, 10px)',
         top: 0,
         left: 0,
         zIndex: 1,
@@ -1064,6 +1065,7 @@ const styles = {
     gridCellPhoto: {
         width: '100%',
         height: '100%',
+        borderRadius: 'clamp(5px, 0.5vw, 10px)',
         objectFit: 'cover',
     },
     grid: {
