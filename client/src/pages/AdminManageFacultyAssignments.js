@@ -6,6 +6,10 @@ import '../styles/AdminManageFacultyAssignments.css';
 // Use environment variable directly instead of importing from config
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
 
+// Hardcoded options for dropdowns
+const sections = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'D1', 'D2', 'E1', 'E2', 'F1', 'F2', 'G1', 'G2', 'H1', 'H2', 'I1', 'I2', 'J1', 'J2', 'K1', 'K2', 'L1', 'L2'];
+const semesters = ['1', '2', '3', '4', '5', '6', '7', '8'];
+
 const AdminManageFacultyAssignments = () => {
   const [loading, setLoading] = useState(true);
   const [faculties, setFaculties] = useState([]);
@@ -16,6 +20,11 @@ const AdminManageFacultyAssignments = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Confirmation modal states
+  const [showAddConfirmation, setShowAddConfirmation] = useState(false);
+  const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false);
+  const [assignmentToRemove, setAssignmentToRemove] = useState(null);
   
   const navigate = useNavigate();
 
@@ -34,6 +43,18 @@ const AdminManageFacultyAssignments = () => {
     // No need to fetch departments as they are hardcoded
     setLoading(false);
   }, [navigate]);
+  
+  // Clear error and success messages after 10 seconds
+  useEffect(() => {
+    if (error || success) {
+      const timer = setTimeout(() => {
+        setError('');
+        setSuccess('');
+      }, 10000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error, success]);
 
   // Fetch faculties when department changes
   useEffect(() => {
@@ -84,13 +105,21 @@ const AdminManageFacultyAssignments = () => {
     setNewAssignment(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAddAssignment = async () => {
+  // Show add confirmation modal if inputs are valid
+  const confirmAddAssignment = () => {
     // Validate inputs
     if (!newAssignment.semester || !newAssignment.section) {
-      setError('Please enter both semester and section');
+      setError('Please select both semester and section');
       return;
     }
-
+    
+    setShowAddConfirmation(true);
+  };
+  
+  // Handle actual assignment addition after confirmation
+  const handleAddAssignment = async () => {
+    setShowAddConfirmation(false);
+    
     try {
       const token = localStorage.getItem('token');
       
@@ -124,12 +153,23 @@ const AdminManageFacultyAssignments = () => {
     }
   };
 
-  const handleRemoveAssignment = async (assignmentId) => {
+  // Show remove confirmation modal
+  const confirmRemoveAssignment = (assignmentId) => {
+    setAssignmentToRemove(assignmentId);
+    setShowRemoveConfirmation(true);
+  };
+  
+  // Handle actual assignment removal after confirmation
+  const handleRemoveAssignment = async () => {
+    setShowRemoveConfirmation(false);
+    
+    if (!assignmentToRemove) return;
+    
     try {
       const token = localStorage.getItem('token');
       
       const response = await axios.delete(
-        `${BACKEND_URL}/api/admin/faculty/${selectedFaculty._id}/assignment/${assignmentId}`,
+        `${BACKEND_URL}/api/admin/faculty/${selectedFaculty._id}/assignment/${assignmentToRemove}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -149,9 +189,11 @@ const AdminManageFacultyAssignments = () => {
       
       setSuccess('Assignment removed successfully');
       setError('');
+      setAssignmentToRemove(null);
     } catch (error) {
       console.error('Error removing assignment:', error);
       setError(error.response?.data?.message || 'Failed to remove assignment. Please try again.');
+      setAssignmentToRemove(null);
     }
   };
 
@@ -166,6 +208,50 @@ const AdminManageFacultyAssignments = () => {
 
   return (
     <div className="manage-faculty-container">
+      {/* Add Assignment Confirmation Modal */}
+      {showAddConfirmation && (
+        <div className="modal-overlay">
+          <div className="confirmation-modal">
+            <h3>Confirm Assignment Addition</h3>
+            <p>Are you sure you want to add the following teaching assignment?</p>
+            <div className="assignment-details">
+              <p><strong>Faculty:</strong> {selectedFaculty.name}</p>
+              <p><strong>Semester:</strong> {newAssignment.semester}</p>
+              <p><strong>Section:</strong> {newAssignment.section}</p>
+            </div>
+            <div className="modal-buttons">
+              <button className="cancel-btn" onClick={() => setShowAddConfirmation(false)}>
+                Cancel
+              </button>
+              <button className="confirm-btn" onClick={handleAddAssignment}>
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Remove Assignment Confirmation Modal */}
+      {showRemoveConfirmation && (
+        <div className="modal-overlay">
+          <div className="confirmation-modal">
+            <h3>Confirm Assignment Removal</h3>
+            <p>Are you sure you want to remove this teaching assignment?</p>
+            <div className="assignment-details">
+              <p><strong>Faculty:</strong> {selectedFaculty.name}</p>
+              <p><strong>Assignment:</strong> {selectedFaculty.teachingAssignments.find(a => a._id === assignmentToRemove)?.semester} - {selectedFaculty.teachingAssignments.find(a => a._id === assignmentToRemove)?.section}</p>
+            </div>
+            <div className="modal-buttons">
+              <button className="cancel-btn" onClick={() => setShowRemoveConfirmation(false)}>
+                Cancel
+              </button>
+              <button className="confirm-btn" onClick={handleRemoveAssignment}>
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="header">
         <h1>Manage Faculty Assignments</h1>
         <button onClick={() => navigate('/admin/dashboard')} className="back-button">
@@ -224,7 +310,7 @@ const AdminManageFacultyAssignments = () => {
                       <div className="faculty-info">
                         <h3>{faculty.name}</h3>
                         <p><i className="fas fa-envelope"></i> {faculty.email}</p>
-                        <p><i className="fas fa-id-badge"></i> {faculty.employeeId || 'No ID'}</p>
+                        <p><i className="fas fa-id-badge"></i> {faculty.facultyId || 'No ID'}</p>
                       </div>
                       <div className="assignment-count">
                         <span className="count">{faculty.teachingAssignments.length}</span>
@@ -265,7 +351,7 @@ const AdminManageFacultyAssignments = () => {
                           <td>
                             <button 
                               className="remove-btn"
-                              onClick={() => handleRemoveAssignment(assignment._id)}
+                              onClick={() => confirmRemoveAssignment(assignment._id)}
                             >
                               <i className="fas fa-trash"></i> Remove
                             </button>
@@ -282,27 +368,36 @@ const AdminManageFacultyAssignments = () => {
                 <div className="assignment-form">
                   <div className="form-group">
                     <label>Semester:</label>
-                    <input
-                      type="text"
+                    <select
                       name="semester"
-                      placeholder="e.g., 1st, 2nd, 3rd"
                       value={newAssignment.semester}
                       onChange={handleInputChange}
-                    />
+                      className="dropdown-select"
+                    >
+                      <option value="">Select Semester</option>
+                      {semesters.map(sem => (
+                        <option key={sem} value={sem}>{sem}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="form-group">
                     <label>Section:</label>
-                    <input
-                      type="text"
+                    <select
                       name="section"
-                      placeholder="e.g., A, B, C"
                       value={newAssignment.section}
                       onChange={handleInputChange}
-                    />
+                      className="dropdown-select"
+                    >
+                      <option value="">Select Section</option>
+                      {sections.map(sec => (
+                        <option key={sec} value={sec}>{sec}</option>
+                      ))}
+                    </select>
                   </div>
                   <button 
-                    className="add-btn"
-                    onClick={handleAddAssignment}
+                    className={`add-btn ${!newAssignment.semester || !newAssignment.section ? 'disabled-btn' : ''}`}
+                    onClick={confirmAddAssignment}
+                    disabled={!newAssignment.semester || !newAssignment.section}
                   >
                     <i className="fas fa-plus"></i> Add Assignment
                   </button>
