@@ -1005,15 +1005,14 @@ const styles = {
     },
     gridContainer: {
         backgroundColor: '#ffffff',
-        padding: 'clamp(10px, 2vw, 20px)',
+        padding: '20px',
         borderRadius: '8px',
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         marginBottom: '30px',
         width: '100%',  // Match the width of the control panel
         margin: '0 auto',  // Center the grid container
-        overflow: 'hidden',  // Prevent content from overflowing
+        overflow: 'visible',  // Allow hover cards to be visible outside the container
         position: 'relative',  // Establish positioning context
-        maxWidth: '1200px',  // Limit maximum width to prevent excessive spacing
     },
     gridCell: {
         width: 'clamp(60px, 6vw, 90px)',  // Responsive width with min/max constraints
@@ -1074,17 +1073,15 @@ const styles = {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 'clamp(5px, 1vw, 10px)',
+        gap: '10px',
         width: '100%',
-        overflowX: 'auto',  // Allow horizontal scrolling if needed
     },
     row: {
         display: 'flex',
         justifyContent: 'center',
-        flexWrap: 'wrap',  // Allow wrapping on smaller screens
-        gap: 'clamp(5px, 1vw, 10px)',
-        width: 'fit-content',  // Adjust width based on content
-        margin: '0 auto',  // Center the row
+        flexWrap: 'nowrap',
+        gap: '10px',
+        width: '100%',
     },
     sessionStats: {
         backgroundColor: '#ffffff',
