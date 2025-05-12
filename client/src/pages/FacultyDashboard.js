@@ -689,22 +689,11 @@ const FacultyDashboard = () => {
                                             </div>
                                             
                                             {cell.used && cell.photoFilename && (
-                                                <div style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    position: 'absolute',
-                                                    top: 0,
-                                                    left: 0,
-                                                    zIndex: 1
-                                                }}>
+                                                <div style={styles.gridCellPhotoContainer}>
                                                     <img 
                                                         src={cell.cloudinaryUrl || `${BACKEND_URL}/api/photo-verification/${cell.photoFilename}`}
                                                         alt="Student"
-                                                        style={{
-                                                            width: '100%',
-                                                            height: '100%',
-                                                            objectFit: 'cover'
-                                                        }}
+                                                        style={styles.gridCellPhoto}
                                                         onError={(e) => {
                                                             e.target.onerror = null;
                                                             e.target.src = 'https://via.placeholder.com/60?text=No+Photo';
@@ -712,16 +701,13 @@ const FacultyDashboard = () => {
                                                     />
                                                 </div>
                                             )}
-                                            <div style={{ fontSize: '31px', fontWeight: 'bold', position: 'relative' }}>
+                                            <div style={styles.gridCellCode}>
                                                 {cell.code}
                                             </div>
                                             {cell.used && (
-                                                <div style={{ 
-                                                    fontSize: '31px', 
-                                                    marginTop: '2px',
-                                                    color: cell.photoFilename ? 'white' : '#ffeb3b',
-                                                    fontWeight: 'bold',
-                                                    position: 'relative',
+                                                <div style={{
+                                                    ...styles.gridCellVerification,
+                                                    ...(cell.photoFilename ? styles.gridCellVerificationVerified : styles.gridCellVerificationNoPhoto)
                                                 }}>
                                                     {cell.photoFilename ? 'Verified' : 'No Photo'}
                                                 </div>
@@ -1049,6 +1035,36 @@ const styles = {
     gridCellUnused: {
         backgroundColor: '#f5f5f5',
         color: '#333',
+    },
+    gridCellCode: {
+        fontSize: 'clamp(20px, 2vw, 31px)',
+        fontWeight: 'bold',
+        position: 'relative',
+    },
+    gridCellVerification: {
+        fontSize: 'clamp(12px, 1.5vw, 20px)',
+        marginTop: 'clamp(1px, 0.2vw, 2px)',
+        fontWeight: 'bold',
+        position: 'relative',
+    },
+    gridCellVerificationVerified: {
+        color: 'white',
+    },
+    gridCellVerificationNoPhoto: {
+        color: '#ffeb3b',
+    },
+    gridCellPhotoContainer: {
+        width: '100%',
+        height: '100%',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        zIndex: 1,
+    },
+    gridCellPhoto: {
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
     },
     grid: {
         display: 'flex',
