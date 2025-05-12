@@ -53,7 +53,7 @@ router.get('/faculties', ensureAdmin, async (req, res) => {
     const faculties = await User.find({ 
       role: 'faculty',
       department
-    }).select('name email employeeId department teachingAssignments');
+    }).select('name email facultyId department teachingAssignments');
     
     res.json(faculties);
   } catch (error) {
