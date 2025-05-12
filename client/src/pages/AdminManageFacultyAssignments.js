@@ -8,7 +8,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"
 const AdminManageFacultyAssignments = () => {
   const [loading, setLoading] = useState(true);
   const [faculties, setFaculties] = useState([]);
-  const [departments, setDepartments] = useState([]);
+  const [departments] = useState(['BTech', 'BCA', 'BCom', 'BBA', 'Law', 'MCA', 'MBA', 'BPharm', 'BSc']);
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedFaculty, setSelectedFaculty] = useState(null);
   const [newAssignment, setNewAssignment] = useState({ semester: '', section: '' });
@@ -30,7 +30,8 @@ const AdminManageFacultyAssignments = () => {
     };
     
     checkAuth();
-    fetchDepartments();
+    // No need to fetch departments as they are hardcoded
+    setLoading(false);
   }, [navigate]);
 
   // Fetch faculties when department changes
@@ -42,28 +43,7 @@ const AdminManageFacultyAssignments = () => {
     }
   }, [selectedDepartment]);
 
-  const fetchDepartments = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${BACKEND_URL}/api/admin/departments`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch departments');
-      }
-      
-      const data = await response.json();
-      setDepartments(data);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching departments:', error);
-      setError('Failed to load departments. Please try again.');
-      setLoading(false);
-    }
-  };
+  // Removed fetchDepartments function as we're using hardcoded departments
 
   const fetchFaculties = async (department) => {
     try {
