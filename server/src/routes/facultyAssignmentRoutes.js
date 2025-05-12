@@ -1,19 +1,31 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const auth = require('../middleware/auth');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 
-// Middleware to check admin role
-const checkAdmin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ message: 'Access denied. Admin only.' });
+// Middleware to ensure admin role - matches the approach in adminRoutes.js
+const ensureAdmin = (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+    
+    req.admin = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: 'Invalid or expired token' });
   }
-  next();
 };
 
 // Get all departments (unique values from faculty users)
-router.get('/departments', auth, checkAdmin, async (req, res) => {
+router.get('/departments', ensureAdmin, async (req, res) => {
   try {
     // Find all faculty users and get unique departments
     const faculties = await User.find({ role: 'faculty' });
@@ -29,7 +41,7 @@ router.get('/departments', auth, checkAdmin, async (req, res) => {
 });
 
 // Get faculties by department
-router.get('/faculties', auth, checkAdmin, async (req, res) => {
+router.get('/faculties', ensureAdmin, async (req, res) => {
   try {
     const { department } = req.query;
     
@@ -51,7 +63,7 @@ router.get('/faculties', auth, checkAdmin, async (req, res) => {
 });
 
 // Add teaching assignment to faculty
-router.post('/faculty/:id/assignment', auth, checkAdmin, async (req, res) => {
+router.post('/faculty/:id/assignment', ensureAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { semester, section } = req.body;
@@ -110,7 +122,7 @@ router.post('/faculty/:id/assignment', auth, checkAdmin, async (req, res) => {
 });
 
 // Remove teaching assignment from faculty
-router.delete('/faculty/:id/assignment/:assignmentId', auth, checkAdmin, async (req, res) => {
+router.delete('/faculty/:id/assignment/:assignmentId', ensureAdmin, async (req, res) => {
   try {
     const { id, assignmentId } = req.params;
     
