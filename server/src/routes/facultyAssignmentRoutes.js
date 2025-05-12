@@ -89,21 +89,6 @@ router.post('/faculty/:id/assignment', ensureAdmin, async (req, res) => {
       return res.status(400).json({ message: 'This assignment already exists for this faculty' });
     }
     
-    // Check if another faculty already has this assignment
-    const conflictingFaculty = await User.findOne({
-      role: 'faculty',
-      'teachingAssignments': {
-        $elemMatch: { semester, section }
-      },
-      _id: { $ne: id } // Exclude current faculty
-    });
-    
-    if (conflictingFaculty) {
-      return res.status(400).json({ 
-        message: `This assignment is already assigned to ${conflictingFaculty.name}` 
-      });
-    }
-    
     // Add the new assignment
     const newAssignment = { 
       _id: new mongoose.Types.ObjectId(), // Generate a new ID for the assignment
