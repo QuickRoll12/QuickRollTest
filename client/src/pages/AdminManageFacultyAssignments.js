@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import '../styles/AdminManageFacultyAssignments.css';
 
 // Use environment variable directly instead of importing from config
@@ -48,22 +49,20 @@ const AdminManageFacultyAssignments = () => {
   const fetchFaculties = async (department) => {
     try {
       setLoading(true);
-      const response = await fetch(`${BACKEND_URL}/api/admin/faculties?department=${department}`, {
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.get(`${BACKEND_URL}/api/admin/faculties`, {
+        params: { department },
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${token}`
         }
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch faculties');
-      }
-      
-      const data = await response.json();
-      setFaculties(data);
-      setLoading(false);
+      setFaculties(response.data);
     } catch (error) {
       console.error('Error fetching faculties:', error);
       setError('Failed to load faculties. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -93,21 +92,19 @@ const AdminManageFacultyAssignments = () => {
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/admin/faculty/${selectedFaculty._id}/assignment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(newAssignment)
-      });
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.post(
+        `${BACKEND_URL}/api/admin/faculty/${selectedFaculty._id}/assignment`,
+        newAssignment,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add assignment');
-      }
-
-      const updatedFaculty = await response.json();
+      const updatedFaculty = response.data;
       
       // Update the faculty in the list
       setFaculties(faculties.map(f => 
@@ -123,25 +120,24 @@ const AdminManageFacultyAssignments = () => {
       setError('');
     } catch (error) {
       console.error('Error adding assignment:', error);
-      setError(error.message || 'Failed to add assignment. Please try again.');
+      setError(error.response?.data?.message || 'Failed to add assignment. Please try again.');
     }
   };
 
   const handleRemoveAssignment = async (assignmentId) => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/admin/faculty/${selectedFaculty._id}/assignment/${assignmentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.delete(
+        `${BACKEND_URL}/api/admin/faculty/${selectedFaculty._id}/assignment/${assignmentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
-      });
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to remove assignment');
-      }
-
-      const updatedFaculty = await response.json();
+      const updatedFaculty = response.data;
       
       // Update the faculty in the list
       setFaculties(faculties.map(f => 
@@ -155,7 +151,7 @@ const AdminManageFacultyAssignments = () => {
       setError('');
     } catch (error) {
       console.error('Error removing assignment:', error);
-      setError(error.message || 'Failed to remove assignment. Please try again.');
+      setError(error.response?.data?.message || 'Failed to remove assignment. Please try again.');
     }
   };
 
