@@ -26,6 +26,7 @@ import Footer from './components/Footer';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ChatPage from './pages/ChatPage';
 import AdminChatbotContent from './pages/AdminChatbotContent';
+import AdminManageFacultyAssignments from './pages/AdminManageFacultyAssignments';
 import Chatbot from './components/Chatbot';
 
 // Protected Route Component
@@ -120,7 +121,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<Login />} />
                 <Route path="/login" element={<Login />} />
-                {/* <Route path="/signup" element={<Signup />} /> */}
+                <Route path="/signup" element={<Signup />} />
                 <Route path="/about" element={<AboutUs />} />
                 <Route path="/verify-email" element={<VerifyEmail />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -205,6 +206,14 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={['admin']}>
                       <AdminChatbotContent />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/manage-faculty-assignments" 
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <AdminManageFacultyAssignments />
                     </ProtectedRoute>
                   } 
                 />
