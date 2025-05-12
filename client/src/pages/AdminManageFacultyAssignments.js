@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/AdminManageFacultyAssignments.css';
 
+// Use environment variable directly instead of importing from config
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5000";
+
 const AdminManageFacultyAssignments = () => {
   const [loading, setLoading] = useState(true);
   const [faculties, setFaculties] = useState([]);
@@ -42,7 +45,7 @@ const AdminManageFacultyAssignments = () => {
   const fetchDepartments = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/departments', {
+      const response = await fetch(`${BACKEND_URL}/api/admin/departments`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -65,7 +68,7 @@ const AdminManageFacultyAssignments = () => {
   const fetchFaculties = async (department) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/faculties?department=${department}`, {
+      const response = await fetch(`${BACKEND_URL}/api/admin/faculties?department=${department}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -110,7 +113,7 @@ const AdminManageFacultyAssignments = () => {
     }
 
     try {
-      const response = await fetch(`/api/admin/faculty/${selectedFaculty._id}/assignment`, {
+      const response = await fetch(`${BACKEND_URL}/api/admin/faculty/${selectedFaculty._id}/assignment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +149,7 @@ const AdminManageFacultyAssignments = () => {
 
   const handleRemoveAssignment = async (assignmentId) => {
     try {
-      const response = await fetch(`/api/admin/faculty/${selectedFaculty._id}/assignment/${assignmentId}`, {
+      const response = await fetch(`${BACKEND_URL}/api/admin/faculty/${selectedFaculty._id}/assignment/${assignmentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
