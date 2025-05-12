@@ -1031,9 +1031,9 @@ const styles = {
     gridCell: {
         width: 'clamp(60px, 5vw, 90px)',  // Responsive width with min/max constraints
         height: 'clamp(60px, 5vw, 90px)',  // Responsive height with min/max constraints
-        border: '1px solid #ddd',
-        borderRadius: '10px',
-        margin: '2px',
+        border: 'clamp(1px, 0.1vw, 2px) solid #ddd',  // Responsive border
+        borderRadius: 'clamp(5px, 0.5vw, 10px)',  // Responsive border radius
+        margin: 'clamp(1px, 0.2vw, 2px)',  // Responsive margin
         display: 'flex',
         fontSize: 'clamp(20px, 2vw, 31px)',  // Responsive font size
         flexDirection: 'column',
