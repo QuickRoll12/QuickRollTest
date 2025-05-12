@@ -637,21 +637,9 @@ const FacultyDashboard = () => {
                                         <div
                                             key={`${i}-${j}`}
                                             style={{
-                                                width: '90px',
-                                                height: '90px',
-                                                border: '1px solid #ddd',
-                                                borderRadius: '10px',
-                                                margin: '2px',
-                                                display: 'flex',
-                                                fontSize: '31px',
-                                                flexDirection: 'column',
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                backgroundColor: cell.used ? '#4caf50' : '#f5f5f5',
-                                                color: cell.used ? 'white' : '#333',
-                                                position: 'relative',
+                                                ...styles.gridCell,
+                                                ...(cell.used ? styles.gridCellUsed : styles.gridCellUnused),
                                                 cursor: 'pointer',
-                                                overflow: 'visible' /* Ensure the hover card is visible */
                                             }}
                                             className="grid-cell"
                                             onMouseEnter={(e) => {
@@ -1039,6 +1027,28 @@ const styles = {
         margin: '0 auto',  // Center the grid container
         overflow: 'visible',  // Allow hover cards to be visible outside the container
         position: 'relative',  // Establish positioning context
+    },
+    gridCell: {
+        width: 'clamp(60px, 5vw, 90px)',  // Responsive width with min/max constraints
+        height: 'clamp(60px, 5vw, 90px)',  // Responsive height with min/max constraints
+        border: '1px solid #ddd',
+        borderRadius: '10px',
+        margin: '2px',
+        display: 'flex',
+        fontSize: 'clamp(20px, 2vw, 31px)',  // Responsive font size
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+        overflow: 'visible',
+    },
+    gridCellUsed: {
+        backgroundColor: '#4caf50',
+        color: 'white',
+    },
+    gridCellUnused: {
+        backgroundColor: '#f5f5f5',
+        color: '#333',
     },
     grid: {
         display: 'flex',
