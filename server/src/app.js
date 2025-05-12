@@ -16,6 +16,7 @@ const reportRoutes = require('./routes/reportRoutes');
 const sheetMappingRoutes = require('./routes/sheetMappingRoutes');
 const attendanceRecordRoutes = require('./routes/attendanceRecordRoutes');
 const photoVerificationRoutes = require('./routes/photoVerificationRoutes');
+const facultyAssignmentRoutes = require('./routes/facultyAssignmentRoutes');
 const path = require('path');
 const photoVerificationService = require('./services/photoVerificationService'); // Import photoVerificationService
 
@@ -547,6 +548,15 @@ app.get('/', (req, res) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
+
+// Admin routes
+app.use('/api/admin', adminRoutes);
+
+// Faculty routes
+app.use('/api/faculty', facultyRoutes);
+
+// Faculty assignment routes (for admin)
+app.use('/api/admin', facultyAssignmentRoutes);
 
 // Admin route to check server status
 app.get('/api/status', (req, res) => {

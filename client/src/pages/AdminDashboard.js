@@ -107,6 +107,16 @@ const AdminDashboard = () => {
             <p>Manage university information for the chatbot</p>
           </div>
         </div>
+        
+        <div className="admin-card" onClick={() => navigateTo('/admin/manage-faculty-assignments')}>
+          <div className="card-icon">
+            <i className="fas fa-chalkboard-teacher"></i>
+          </div>
+          <div className="card-content">
+            <h3>Faculty Assignments</h3>
+            <p>Manage teaching assignments for faculty members</p>
+          </div>
+        </div>
       </div>
     </div>
   );
