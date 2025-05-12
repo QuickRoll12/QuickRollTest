@@ -73,7 +73,6 @@ router.get('/suspicious-devices', auth, ensureAdminOrFaculty, async (req, res) =
 
 // Admin login route
 router.post('/login', async (req, res) => {
-  console.log('Admin login attempt received:', req.body);
   const { adminId, password } = req.body;
   
   // Check if environment variables are set
@@ -85,7 +84,6 @@ router.post('/login', async (req, res) => {
   console.log('Checking admin credentials...');
   // Hard-coded admin credentials (should be stored in environment variables in production)
   if (adminId === process.env.ADMIN_ID && password === process.env.ADMIN_PASSWORD) {
-    console.log('Admin login successful for:', adminId);
     const payload = { id: 'admin', role: 'admin' };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
     return res.json({ success: true, token, user: { role: 'admin' } });
