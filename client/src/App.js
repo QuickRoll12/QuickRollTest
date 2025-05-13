@@ -27,6 +27,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ChatPage from './pages/ChatPage';
 import AdminChatbotContent from './pages/AdminChatbotContent';
 import AdminManageFacultyAssignments from './pages/AdminManageFacultyAssignments';
+import StudentAttendanceSummary from './pages/StudentAttendanceSummary';
+import StudentAttendanceDetails from './pages/StudentAttendanceDetails';
 import Chatbot from './components/Chatbot';
 
 // Protected Route Component
@@ -141,6 +143,22 @@ function App() {
                   element={
                     <ProtectedRoute allowedRoles={['student']}>
                       <StudentDashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/student/attendance/summary" 
+                  element={
+                    <ProtectedRoute allowedRoles={['student']}>
+                      <StudentAttendanceSummary />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/student/attendance/details/:facultyId" 
+                  element={
+                    <ProtectedRoute allowedRoles={['student']}>
+                      <StudentAttendanceDetails />
                     </ProtectedRoute>
                   } 
                 />
