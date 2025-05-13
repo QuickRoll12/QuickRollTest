@@ -151,17 +151,45 @@
   }
   
   .back-button {
-    padding: 8px 16px;
+    padding: 10px 18px;
     background-color: #f5f5f5;
     border: 1px solid #ddd;
     border-radius: 4px;
     cursor: pointer;
     font-weight: 500;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   
   .back-button:hover {
     background-color: #e0e0e0;
+  }
+  
+  .prominent-back {
+    background-color: #3f51b5;
+    color: white;
+    border: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-size: 15px;
+    padding: 12px 20px;
+    border-radius: 6px;
+  }
+  
+  .prominent-back:hover {
+    background-color: #303f9f;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .prominent-back:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+  
+  .back-arrow {
+    font-size: 18px;
+    font-weight: bold;
   }
   
   .loading-spinner {
@@ -220,4 +248,5 @@
       min-width: 70px;
       padding: 4px 8px;
     }
-  }  
+  }
+  

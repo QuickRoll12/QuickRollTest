@@ -71,8 +71,8 @@ const StudentAttendanceDetails = () => {
   return (
     <div className="attendance-container">
       <div className="attendance-header">
-        <button className="back-button" onClick={handleBackClick}>
-          &larr; Back
+        <button className="back-button prominent-back" onClick={handleBackClick}>
+          <span className="back-arrow">&larr;</span> Back to Summary
         </button>
         <h2>Attendance Details: {facultyName}</h2>
       </div>

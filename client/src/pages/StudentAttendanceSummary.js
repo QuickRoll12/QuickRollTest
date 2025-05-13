@@ -69,9 +69,18 @@ const StudentAttendanceSummary = () => {
     );
   }
 
+  const handleBackClick = () => {
+    navigate('/student');
+  };
+
   return (
     <div className="attendance-container">
-      <h2>Attendance Summary</h2>
+      <div className="attendance-header">
+        <button className="back-button prominent-back" onClick={handleBackClick}>
+          <span className="back-arrow">&larr;</span> Back to Dashboard
+        </button>
+        <h2>Attendance Summary</h2>
+      </div>
       
       {attendanceSummary.length === 0 ? (
         <div className="no-data-message">No attendance records found for the last 30 days.</div>
