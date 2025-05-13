@@ -581,7 +581,7 @@ class AttendanceService {
         this.codeRegenerationCallback = callback;
     }
 
-    async endSession(department, semester, section) {
+    async endSession(department, semester, section, facultyUser = null) {
         this.validateFields(department, semester, section);
         
         const sessionKey = this.generateSessionKey(department, semester, section);
@@ -680,30 +680,40 @@ class AttendanceService {
                 facultyId: 'unknown'
             };
 
-            // Try to get faculty information from the database
-            try {
-                // Find the faculty for this department and section using the new teachingAssignments format
-                const faculty = await User.findOne({
-                    role: 'faculty',
-                    department: department,
-                    teachingAssignments: { 
-                        $elemMatch: { 
-                            semester: semester,
-                            section: section 
+            // Use the faculty user information if provided
+            if (facultyUser) {
+                facultyData = {
+                    name: facultyUser.name,
+                    email: facultyUser.email,
+                    facultyId: facultyUser.facultyId || facultyUser._id
+                };
+                console.log(`Using provided faculty information: ${facultyData.name} (${facultyData.email})`);
+            } else {
+                // If no faculty user provided, try to get faculty information from the database
+                try {
+                    // Find the faculty for this department and section using the teaching assignments
+                    const faculty = await User.findOne({
+                        role: 'faculty',
+                        teachingAssignments: { 
+                            $elemMatch: { 
+                                semester: semester,
+                                section: section 
+                            }
                         }
-                    }
-                });
+                    });
 
-                if (faculty) {
-                    facultyData = {
-                        name: faculty.name,
-                        email: faculty.email,
-                        facultyId: faculty.facultyId
-                    };
+                    if (faculty) {
+                        facultyData = {
+                            name: faculty.name,
+                            email: faculty.email,
+                            facultyId: faculty.facultyId || faculty._id
+                        };
+                        console.log(`Found faculty in database: ${facultyData.name} (${facultyData.email})`);
+                    }
+                } catch (error) {
+                    console.error('Error fetching faculty information:', error);
+                    // Continue with default faculty data
                 }
-            } catch (error) {
-                console.error('Error fetching faculty information:', error);
-                // Continue with default faculty data
             }
 
             // Save attendance record to database

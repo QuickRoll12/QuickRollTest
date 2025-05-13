@@ -379,7 +379,8 @@ io.on('connection', (socket) => {
                 throw new Error('Only faculty members can end attendance sessions');
             }
 
-            const result = await attendanceService.endSession(department, semester, section);
+            // Pass the faculty user information to ensure correct faculty data in attendance records
+            const result = await attendanceService.endSession(department, semester, section, socket.user);
             
             // Clean up temporary photos for this session
             try {
