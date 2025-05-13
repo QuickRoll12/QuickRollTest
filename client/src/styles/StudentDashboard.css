@@ -6,6 +6,36 @@
     font-family: 'Arial', sans-serif; /* Modern font */
 }
 
+.dashboard-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.view-attendance-btn {
+    background-color: #4285f4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.view-attendance-btn:hover {
+    background-color: #3367d6;
+}
+
+.view-attendance-btn:active {
+    background-color: #2a56c6;
+    transform: translateY(1px);
+}
+
 h1 {
     color: #333; /* Darker color for the title */
     margin-bottom: 20px; /* Space below the title */

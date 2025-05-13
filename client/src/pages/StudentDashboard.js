@@ -716,6 +716,15 @@ const StudentDashboard = () => {
             <div className="container">
                 <h2 className="title">Student Dashboard</h2>
                 
+                <div className="dashboard-actions">
+                    <button 
+                        className="view-attendance-btn"
+                        onClick={() => navigate('/student/attendance/summary')}
+                    >
+                        View Past Attendance
+                    </button>
+                </div>
+                
                 {isFullScreen && (
                     <div className="fullscreen-indicator">
                         <i className="fas fa-expand"></i>

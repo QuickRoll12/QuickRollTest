@@ -17,6 +17,7 @@ const sheetMappingRoutes = require('./routes/sheetMappingRoutes');
 const attendanceRecordRoutes = require('./routes/attendanceRecordRoutes');
 const photoVerificationRoutes = require('./routes/photoVerificationRoutes');
 const facultyAssignmentRoutes = require('./routes/facultyAssignmentRoutes');
+const studentAttendanceRoutes = require('./routes/studentAttendanceRoutes');
 const path = require('path');
 const photoVerificationService = require('./services/photoVerificationService'); // Import photoVerificationService
 
@@ -557,6 +558,9 @@ app.use('/api/faculty', facultyRoutes);
 
 // Faculty assignment routes (for admin)
 app.use('/api/admin', facultyAssignmentRoutes);
+
+// Student attendance routes
+app.use('/api/student/attendance', studentAttendanceRoutes);
 
 // Admin route to check server status
 app.get('/api/status', (req, res) => {
