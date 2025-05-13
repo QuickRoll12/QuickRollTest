@@ -687,7 +687,6 @@ class AttendanceService {
                     email: facultyUser.email,
                     facultyId: facultyUser.facultyId || facultyUser._id
                 };
-                console.log(`Using provided faculty information: ${facultyData.name} (${facultyData.email})`);
             } else {
                 // If no faculty user provided, try to get faculty information from the database
                 try {
@@ -708,7 +707,6 @@ class AttendanceService {
                             email: faculty.email,
                             facultyId: faculty.facultyId || faculty._id
                         };
-                        console.log(`Found faculty in database: ${facultyData.name} (${facultyData.email})`);
                     }
                 } catch (error) {
                     console.error('Error fetching faculty information:', error);
