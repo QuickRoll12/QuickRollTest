@@ -5,10 +5,6 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import EmailIcon from '@mui/icons-material/Email';
 import CodeIcon from '@mui/icons-material/Code';
-import AbhishekImage from '/Abhishek_negi.jpg';
-import AyushImage from '/Ayush_bhatt.png';
-import HimanshuImage from '/Himanshu_rawat.png';
-import AshutoshImage from '/Ashutosh_rauthan.jpg';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
@@ -84,7 +80,7 @@ const founderData = [
   {
     name: "Himanshu Rawat",
     role: "Technical Lead",
-    image: HimanshuImage,
+    image: '/Himanshu_rawat.png',
     bio: "With strong problem-solving skills and an optimized approach, I drive the technical vision of QuickRoll, ensuring seamless attendance tracking for educational institutions.",
     social: {
       linkedin: "https://www.linkedin.com/in/himanshurawat12",
@@ -96,7 +92,7 @@ const founderData = [
   {
     name: "Ayush Bhatt",
     role: "Concept Designer & RnD Lead",
-    image: AyushImage,
+    image: '/Ayush_bhatt.png',
     bio: "As a Concept Designer & RnD Lead, I drive conceptual ideation, innovation and strategy for a seamless and reliable attendance mechanism.",
     social: {
       linkedin: "https://www.linkedin.com/in/ayush-bhatt-162734305/",
@@ -108,7 +104,7 @@ const founderData = [
   {
     name: "Abhishek Negi",
     role: "FAQ Insights & Analyst",
-    image: AbhishekImage,
+    image: '/Abhishek_negi.jpg',
     bio: "As an FAQ Insights & Analyst with strong communication skills, I specialize in simplifying complex queries into clear, effective solutions through research and strategic analysis.",
     social: {
       linkedin: "https://www.linkedin.com/in/abhishek-negi-300b862b4",
@@ -120,7 +116,7 @@ const founderData = [
   {
     name: "Ashutosh Rauthan",
     role: "Simulation & Testing Analyst",
-    image: AshutoshImage,
+    image: '/Ashutosh_rauthan.jpg',
     bio: "I analyzed various real-life proxy marking methods, helping us identify and resolve potential loopholes in advance to ensure a more reliable and efficient attendance system.",
     social: {
       linkedin: "https://linkedin.com/in/ashutosh-rauthan-277404339",
