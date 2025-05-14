@@ -289,9 +289,6 @@ class AttendanceService {
             throw new Error(deviceCheckResult.reason);
         }
     
-        // Storing WebRTC Session & Attendance
-        await WebRTCSession.create({ userId, webRTCIPs, timestamp: new Date() });
-    
         const sessionIPs = this.sessionIPs.get(sessionKey) || new Set();
         if (sessionIPs.has(ip)) {
             sessionData.grid[row][col].used = false;
@@ -316,21 +313,23 @@ class AttendanceService {
         sessionData.grid[row][col].studentEmail = user.email;
         sessionData.grid[row][col].photo_url = user.photo_url || '/default-student.png';
         
-        // Verify the photo
-        if (photoFilename) {
-            const verificationResult = await photoVerificationService.verifyPhoto(photoFilename, user.photo_url);
-            if (!verificationResult.verified) {
-                sessionData.grid[row][col].used = false;
-                throw new Error('Photo verification failed');
-            }
-            // Add the photoFilename to the grid cell
-            sessionData.grid[row][col].photoFilename = photoFilename;
-            // Add the Cloudinary URL if available
-            if (photoCloudinaryUrl) {
-                sessionData.grid[row][col].cloudinaryUrl = photoCloudinaryUrl;
-            }
-        }
-        
+        // we can use this code in future if we would setup the backend for photo verification
+        // if (photoFilename) {
+        //     const verificationResult = await photoVerificationService.verifyPhoto(photoFilename, user.photo_url);
+        //     if (!verificationResult.verified) {
+        //         sessionData.grid[row][col].used = false;
+        //         throw new Error('Photo verification failed');
+        //     }
+        //     // Add the photoFilename to the grid cell
+        //     sessionData.grid[row][col].photoFilename = photoFilename;
+        //     // Add the Cloudinary URL if available
+        //     if (photoCloudinaryUrl) {
+        //         sessionData.grid[row][col].cloudinaryUrl = photoCloudinaryUrl;
+        //     }
+        // }
+
+        // Storing WebRTC Session & Attendance
+        await WebRTCSession.create({ userId, webRTCIPs, timestamp: new Date() });
         await Proxy.create({ 
             fingerprint, 
             ipAddress: ip, 
