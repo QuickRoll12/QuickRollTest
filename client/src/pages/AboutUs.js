@@ -5,10 +5,10 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import EmailIcon from '@mui/icons-material/Email';
 import CodeIcon from '@mui/icons-material/Code';
-import AbhishekImage from './Abhishek_negi.jpg';
-import AyushImage from './Ayush_bhatt.png';
-import HimanshuImage from './Himanshu_rawat.png';
-import AshutoshImage from './Ashutosh_rauthan.jpg';
+import AbhishekImage from '/Abhishek_negi.jpg';
+import AyushImage from '/Ayush_bhatt.png';
+import HimanshuImage from '/Himanshu_rawat.png';
+import AshutoshImage from '/Ashutosh_rauthan.jpg';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   height: '100%',
