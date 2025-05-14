@@ -76,8 +76,6 @@ const savePhoto = async (photoData, department, semester, section, studentId) =>
       uploadStream.end(processedImageBuffer);
     });
     
-    console.log(`Saved photo for student ${studentId} to Cloudinary with URL: ${uploadResult.secure_url}`);
-    
     return {
       filename: filename,
       cloudinaryId: uploadResult.public_id,
@@ -104,7 +102,6 @@ const savePhoto = async (photoData, department, semester, section, studentId) =>
         .toBuffer();
       
       await fs.promises.writeFile(filePath, processedImageBuffer);
-      console.log(`Fallback: Saved photo for student ${studentId} at ${filePath}`);
       
       return {
         filename: filename,
@@ -113,7 +110,6 @@ const savePhoto = async (photoData, department, semester, section, studentId) =>
         isLocalStorage: true
       };
     } catch (fallbackError) {
-      console.error('Fallback storage also failed:', fallbackError);
       throw new Error(`Failed to save photo: ${error.message}`);
     }
   }
@@ -168,7 +164,6 @@ const deletePhoto = async (identifier) => {
     if (identifier.includes('/')) {
       // Delete from Cloudinary
       await cloudinary.uploader.destroy(identifier);
-      console.log(`Deleted photo from Cloudinary: ${identifier}`);
       return true;
     }
     
@@ -176,7 +171,6 @@ const deletePhoto = async (identifier) => {
     try {
       const publicId = `${CLOUDINARY_FOLDER}/${identifier}`;
       await cloudinary.uploader.destroy(publicId);
-      console.log(`Deleted photo from Cloudinary: ${publicId}`);
     } catch (cloudinaryError) {
       console.log(`Photo not found in Cloudinary or failed to delete: ${cloudinaryError.message}`);
     }
@@ -185,7 +179,6 @@ const deletePhoto = async (identifier) => {
     const filePath = path.join(PHOTO_STORAGE_PATH, identifier);
     if (fs.existsSync(filePath)) {
       await unlinkAsync(filePath);
-      console.log(`Deleted photo from local storage: ${identifier}`);
       return true;
     }
     
@@ -200,8 +193,6 @@ const deletePhoto = async (identifier) => {
 const deleteSessionPhotos = async (department, semester, section) => {
   try {
     const sessionPrefix = `${department}_${semester}_${section}_`;
-    console.log(`Attempting to delete photos with prefix: ${sessionPrefix}`);
-    
     // Delete from Cloudinary
     let deletedCount = 0;
     
@@ -213,11 +204,8 @@ const deleteSessionPhotos = async (department, semester, section) => {
         max_results: 500
       });
       
-      console.log(`Found ${result.resources.length} photos in Cloudinary for session ${department}-${semester}-${section}`);
-      
       // Delete each resource
       for (const resource of result.resources) {
-        console.log(`Deleting Cloudinary resource: ${resource.public_id}`);
         await cloudinary.uploader.destroy(resource.public_id);
         deletedCount++;
       }
@@ -239,8 +227,6 @@ const deleteSessionPhotos = async (department, semester, section) => {
           localDeletedCount++;
         }
       }
-      
-      console.log(`Deleted ${localDeletedCount} photos from local storage for session ${department}-${semester}-${section}`);
       deletedCount += localDeletedCount;
     } catch (localError) {
       console.error('Error deleting session photos from local storage:', localError);
@@ -277,8 +263,6 @@ const cleanupOldPhotos = async () => {
         await cloudinary.uploader.destroy(resource.public_id);
         deletedCount++;
       }
-      
-      console.log(`Cleanup: Deleted ${deletedCount} old photos from Cloudinary`);
     } catch (cloudinaryError) {
       console.error('Error cleaning up old photos from Cloudinary:', cloudinaryError);
     }
@@ -299,8 +283,6 @@ const cleanupOldPhotos = async () => {
           deletedCount++;
         }
       }
-      
-      console.log(`Cleanup: Deleted ${deletedCount} old photos from local storage`);
     } catch (localError) {
       console.error('Error cleaning up old photos from local storage:', localError);
     }

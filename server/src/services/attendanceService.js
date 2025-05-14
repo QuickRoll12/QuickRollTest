@@ -485,8 +485,6 @@ class AttendanceService {
             }
         }
         
-        console.log(`Refreshed codes for ${department} - Semester ${semester} - Section ${section}`);
-        
         return {
             success: true,
             message: 'Codes refreshed successfully',
@@ -515,8 +513,6 @@ class AttendanceService {
                 // Refresh the codes
                 const result = this.refreshCodes(department, semester, section);
                 
-                console.log(`Auto-refreshed codes for ${department} - Semester ${semester} - Section ${section}`);
-                
                 // If there's a callback registered, call it with the result
                 if (this.codeRegenerationCallback) {
                     this.codeRegenerationCallback({
@@ -533,8 +529,6 @@ class AttendanceService {
         
         // Store the timer
         this.autoRefreshTimers.set(sessionKey, timer);
-        
-        console.log(`Started auto-refresh timer for session ${sessionKey} with interval ${this.autoRefreshInterval}ms`);
     }
     
     /**
@@ -546,7 +540,6 @@ class AttendanceService {
         if (timer) {
             clearInterval(timer);
             this.autoRefreshTimers.delete(sessionKey);
-            console.log(`Stopped auto-refresh timer for session ${sessionKey}`);
         }
     }
     

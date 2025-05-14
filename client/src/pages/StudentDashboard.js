@@ -651,6 +651,7 @@ const StudentDashboard = () => {
         
         // Check if photo verification is required but no photo has been taken
         if (photoVerificationRequired && !photoFilename) {
+            setError('Please take a photo of yourself');
             setShowCamera(true);
             return;
         }
