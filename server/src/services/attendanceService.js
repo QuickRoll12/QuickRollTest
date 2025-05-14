@@ -321,11 +321,11 @@ class AttendanceService {
         //         throw new Error('Photo verification failed');
         //     }
         //     // Add the photoFilename to the grid cell
-        //     sessionData.grid[row][col].photoFilename = photoFilename;
+        sessionData.grid[row][col].photoFilename = photoFilename;
         //     // Add the Cloudinary URL if available
-        //     if (photoCloudinaryUrl) {
-        //         sessionData.grid[row][col].cloudinaryUrl = photoCloudinaryUrl;
-        //     }
+        if (photoCloudinaryUrl) {
+            sessionData.grid[row][col].cloudinaryUrl = photoCloudinaryUrl;
+        }
         // }
 
         // Storing WebRTC Session & Attendance
