@@ -11,8 +11,6 @@ const io = new Server(server, { cors: { origin: '*' } });
 
 // Set up the callback for code regeneration
 attendanceService.setCodeRegenerationCallback((updatedSession) => {
-    console.log('Code regeneration callback triggered, broadcasting to all clients');
-    console.log(`Updated grid for ${updatedSession.department}-${updatedSession.semester}-${updatedSession.section}`);
     
     // Broadcast the updated grid to all clients
     io.emit('updateGrid', {
@@ -26,9 +24,6 @@ attendanceService.setCodeRegenerationCallback((updatedSession) => {
 });
 
 io.on('connection', (socket) => {
-    console.log('A user connected');
-
-    // Send initial session status to connected client
     socket.emit('sessionStatus', attendanceService.getSessionStatus());
 
     socket.on('getCourseData', () => {

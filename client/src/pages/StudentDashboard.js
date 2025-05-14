@@ -124,10 +124,12 @@ const StudentDashboard = () => {
                     setPhotoVerificationRequired(status.photoVerificationRequired);
                 }
                 
-                // If session is active and we haven't requested fullscreen yet, request it
+                // If session is active and we haven't requested fullscreen yet, request it - TEMPORARILY COMMENTED OUT FOR TESTING
                 if (status.active && !fullScreenRequestedRef.current) {
-                    requestFullScreen();
+                    // requestFullScreen(); // Commented out for testing
                     fullScreenRequestedRef.current = true;
+                    // Always consider in full screen mode for testing
+                    setIsFullScreen(true);
                 }
                 
                 // Handle codes refreshed notification
@@ -269,8 +271,9 @@ const StudentDashboard = () => {
 
     // Add full-screen change detection
     useEffect(() => {
-        // Function to check if we're in full-screen mode
+        // Function to check if we're in full-screen mode - TEMPORARILY COMMENTED OUT FOR TESTING
         const checkFullScreen = () => {
+            /* Original full screen check code
             const isInFullScreen = 
                 document.fullscreenElement ||
                 document.webkitFullscreenElement ||
@@ -283,26 +286,35 @@ const StudentDashboard = () => {
             if (!isInFullScreen && sessionActive && fullScreenRequestedRef.current) {
                 handleFullScreenExit();
             }
+            */
+            
+            // For testing: always consider in full screen mode
+            setIsFullScreen(true);
         };
 
-        // Function to handle visibility change (tab switching)
+        // Function to handle visibility change (tab switching) - TEMPORARILY COMMENTED OUT FOR TESTING
         const handleVisibilityChange = () => {
+            /* Original visibility change code
             if (document.hidden && sessionActive && isFullScreen) {
                 // User switched tabs while in full-screen mode
                 handleFullScreenExit();
             }
+            */
         };
 
-        // Function to handle when app loses focus (mobile)
+        // Function to handle when app loses focus (mobile) - TEMPORARILY COMMENTED OUT FOR TESTING
         const handleAppBlur = () => {
+            /* Original app blur code
             if (sessionActive && isFullScreen) {
                 // User minimized the browser or switched apps
                 handleFullScreenExit();
             }
+            */
         };
 
-        // Function to handle page unload/navigation
+        // Function to handle page unload/navigation - TEMPORARILY COMMENTED OUT FOR TESTING
         const handleBeforeUnload = (e) => {
+            /* Original before unload code
             if (sessionActive && isFullScreen) {
                 // User is navigating away or closing the browser
                 // Note: This won't prevent navigation, just record the violation
@@ -318,6 +330,7 @@ const StudentDashboard = () => {
                     device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "pc" 
                 });
             }
+            */
         };
 
         // Add event listeners

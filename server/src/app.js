@@ -118,7 +118,6 @@ attendanceService.setCodeRegenerationCallback((data) => {
             section: data.section,
             autoRefreshed: true // Flag to indicate this was an automatic refresh
         });
-        console.log(`Auto-refresh: Emitted updateGrid event for ${data.department}-${data.semester}-${data.section}`);
     }
 });
 
@@ -162,13 +161,10 @@ io.on('connection', (socket) => {
     
     // Handle explicit request for course data
     socket.on('getCourseData', () => {
-        console.log('Sending course data to client');
         socket.emit('courseData', { courses, sections });
     });
 
     socket.on('getSessionStatus', ({ department, semester, section }) => {
-        console.log(`📊 Getting session status - Department: ${department}, Semester: ${semester}, Section: ${section}`);
-        
         try {
             const status = attendanceService.getSessionStatus(department, semester, section);
             socket.emit('sessionStatus', {
@@ -188,7 +184,6 @@ io.on('connection', (socket) => {
 
     // New event for photo upload
     socket.on('uploadAttendancePhoto', async ({ department, semester, section, photoData }) => {
-        console.log(`📸 Photo upload attempt - Department: ${department}, Semester: ${semester}, Section: ${section}`);
         
         try {
             // Only students can upload photos
@@ -230,7 +225,6 @@ io.on('connection', (socket) => {
             });
             
         } catch (error) {
-            console.error('Error uploading photo:', error.message);
             socket.emit('photoUploadResponse', {
                 success: false,
                 message: error.message
@@ -273,13 +267,7 @@ io.on('connection', (socket) => {
         // Determine if this is a roll-based or Gmail-based attendance
         const sessionStatus = attendanceService.getSessionStatus(data.department, data.semester, data.section);
         const isGmailSession = sessionStatus.sessionType === 'gmail';
-        
-        if (isGmailSession) {
-            console.log(`📝 Gmail attendance mark attempt - Department: ${data.department}, Semester: ${data.semester}, Section: ${data.section}, Gmail: ${data.gmail}`);
-        } else {
-            console.log(`📝 Roll attendance mark attempt - Department: ${data.department}, Semester: ${data.semester}, Section: ${data.section}, Roll: ${data.rollNumber}`);
-        }
-        
+            
         // Get client IP address - try different socket properties for IP
         let ipAddress = socket.handshake.headers['x-forwarded-for'] || 
                        socket.handshake.headers['x-real-ip'] ||
@@ -310,7 +298,6 @@ io.on('connection', (socket) => {
                 if (!gmail || gmail.trim() === '') {
                     // If no email provided, use the one from the user's profile
                     gmail = socket.user.email;
-                    console.log(`Using email from user profile: ${gmail}`);
                 }
             }
 
@@ -455,7 +442,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('refreshCodes', ({ department, semester, section }) => {
-        console.log(`🔄 Refreshing codes - Department: ${department}, Semester: ${semester}, Section: ${section}`);
         
         try {
             // Only faculty can refresh codes
@@ -478,10 +464,9 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Handle full-screen violation
+    // Handle full-screen violation - TEMPORARILY COMMENTED OUT FOR TESTING
+    /*
     socket.on('fullScreenViolation', async ({ department, semester, section, rollNumber, gmail, fingerprint, webRTCIPs, token, device }) => {
-        console.log(`⚠️ Full-screen violation - Department: ${department}, Semester: ${semester}, Section: ${section}`);
-        
         try {
             // Verify user identity from token
             const userId = socket.user.id;
@@ -537,6 +522,7 @@ io.on('connection', (socket) => {
             socket.emit('error', { message: error.message });
         }
     });
+    */
 
     socket.on('disconnect', () => {
         console.log('👋 User disconnected:', socket.user.name);

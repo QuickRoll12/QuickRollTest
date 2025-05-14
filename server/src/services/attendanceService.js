@@ -123,9 +123,6 @@ class AttendanceService {
             sessionType: sessionType || 'roll' // 'roll' or 'gmail'
         });
 
-        console.log(`Started session for ${department} - Semester ${semester} - Section ${section}`);
-        console.log(`Session Type: ${sessionType || 'roll'}, Total Students: ${totalStudents || 'N/A (Gmail session)'}`);
-
         // Start auto-refresh timer for this session
         this.startAutoRefresh(sessionKey);
 
@@ -169,18 +166,15 @@ class AttendanceService {
         console.log(`[${new Date().toISOString()}] - Attendance marking started`);
     
         this.validateFields(department, semester, section);
-        console.log(`[${new Date().toISOString()}] - Fields validated`);
     
         // Device check
         const { ip, userName, userAgent } = req;
         const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent);
         if (!isMobile) throw new Error('User is not allowed to mark attendance from PC or Laptop !!!');
-        console.log(`[${new Date().toISOString()}] - Device check completed`);
     
         // Check if this is a Gmail-based session
         const sessionKey = this.generateSessionKey(department, semester, section);
         const sessionData = this.sessions.get(sessionKey);
-        console.log(`[${new Date().toISOString()}] - Session fetched`);
     
         if (!sessionData?.active) throw new Error('No active session found');
         
@@ -204,7 +198,6 @@ class AttendanceService {
         if (proxyMarkerCheck) {
             throw new Error('VPN detected !! Your attendance has been restricted.');
         }
-        console.log(`[${new Date().toISOString()}] - ProxyMarker check completed`);
     
         // We already fetched and validated the session above
         
@@ -233,8 +226,6 @@ class AttendanceService {
             }
             if (codeFound) break;
         }
-        console.log(`[${new Date().toISOString()}] - Code validation completed`);
-    
         if (!codeFound) throw new Error('Invalid or already used code');
     
         // Fetching Proxy & WebRTC data in parallel
@@ -244,7 +235,6 @@ class AttendanceService {
             WebRTCSession.find({ webRTCIPs: { $in: webRTCIPs }, timestamp: { $gte: fifteenMinutesAgo }, userId: { $ne: userId } }),
             Proxy.findOne({ fingerprint, timestamp: { $gte: fifteenMinutesAgo } })
         ]);
-        console.log(`[${new Date().toISOString()}] - Proxy & WebRTC checks completed`);
     
         if (userAttendanceCheck){
             sessionData.grid[row][col].used = false;
@@ -267,19 +257,16 @@ class AttendanceService {
                 // country.is API
                 const response = await axios.get(`https://api.country.is/${ip.split(',')[0].trim()}`);
                 countryName = response.data?.country?.toLowerCase();
-                console.log(`[${new Date().toISOString()}] - IP check via country.is`);
             } 
             else if (this.chance === 2) {
                 // ipapi.co API
                 const response = await axios.get(`https://ipapi.co/${ip.split(',')[0].trim()}/country_name`);
                 countryName = response.data.toLowerCase();
-                console.log(`[${new Date().toISOString()}] - IP check via ipapi.co`);
             } 
             else {
                 // ipbase API (original one)
                 const response = await axios.get(`https://api.ipbase.com/v1/json/${ip.split(',')[0].trim()}`);
                 countryName = response.data?.country_name?.toLowerCase();
-                console.log(`[${new Date().toISOString()}] - IP check via ipbase`);
             }
     
             // Rotate the chance variable (1 → 2 → 3 → 1)
@@ -291,14 +278,11 @@ class AttendanceService {
                 throw new Error('VPN use detected! You have been flagged for suspicious activity.');
             }
         } catch (error) {
-            console.error('IP check error:', error);
             if (error.message.includes('VPN')) throw error;
         }
-        console.log(`[${new Date().toISOString()}] - IP check completed`);
     
         // Validating device tracking
         const deviceCheckResult = await deviceTrackingService.canMarkAttendance({ fingerprint, webRTCIPs, ipAddress: ip }, { userId, userName: req.userName || 'Unknown', userRoll: rollNumber }, { department, semester, section });
-        console.log(`[${new Date().toISOString()}] - Device tracking check completed`);
     
         if (!deviceCheckResult.allowed) {
             sessionData.grid[row][col].used = false;
@@ -307,7 +291,6 @@ class AttendanceService {
     
         // Storing WebRTC Session & Attendance
         await WebRTCSession.create({ userId, webRTCIPs, timestamp: new Date() });
-        console.log(`[${new Date().toISOString()}] - WebRTC session stored`);
     
         const sessionIPs = this.sessionIPs.get(sessionKey) || new Set();
         if (sessionIPs.has(ip)) {
@@ -316,12 +299,9 @@ class AttendanceService {
         }
         
         this.sessionIPs.set(sessionKey, sessionIPs.add(ip));
-        console.log(`[${new Date().toISOString()}] - IP check in session completed`);
     
         // Determine the identifier to store (rollNumber or gmail)
         const identifier = sessionData.sessionType === 'gmail' ? gmail : rollNumber;
-        
-        console.log(`Marking attendance with identifier: ${identifier}, session type: ${sessionData.sessionType}`);
         
         // Fetch user data to get the photo_url and other student information
         const user = await User.findById(userId);
@@ -349,7 +329,6 @@ class AttendanceService {
             if (photoCloudinaryUrl) {
                 sessionData.grid[row][col].cloudinaryUrl = photoCloudinaryUrl;
             }
-            console.log(`Added photo filename ${photoFilename} to grid cell`);
         }
         
         await Proxy.create({ 
@@ -365,11 +344,9 @@ class AttendanceService {
             timestamp: new Date(), 
             deviceInfo: `Browser: ${fingerprint.substring(0, 20)}..., IP: ${ip}` 
         });
-        console.log(`[${new Date().toISOString()}] - Proxy record created`);
     
         sessionData.presentStudents.add(identifier);
         this.sessions.set(sessionKey, sessionData);
-        console.log(`[${new Date().toISOString()}] - Attendance marked for ${sessionData.sessionType === 'gmail' ? 'email: ' + gmail : 'roll: ' + rollNumber}`);
     
         const totalTime = Date.now() - startTime;
         console.log(`[${new Date().toISOString()}] - Total execution time: ${totalTime}ms`);
@@ -814,12 +791,6 @@ class AttendanceService {
             }).select('email name classRollNumber');
             
             console.log(`Found ${allStudents.length} total students in section ${section}`);
-            
-            // Debug: Log the roll numbers from database to see their format
-            if (allStudents.length > 0) {
-                console.log('Sample roll number formats in database:', 
-                    allStudents.slice(0, 3).map(s => `${s.name}: '${s.classRollNumber}'`));
-            }
             
             // Try different approaches to match roll numbers
             let absentStudents = [];
