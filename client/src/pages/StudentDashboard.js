@@ -505,32 +505,32 @@ const StudentDashboard = () => {
     };
 
     // Function to handle split-screen detection
-    // const handleSplitScreenDetected = () => {
-    //     // Only show warning if we're not already showing it
-    //     if (!showFullScreenWarning) {
-    //         setShowFullScreenWarning(true);
-    //         setError('Split-screen or floating window detected. This is not allowed during attendance.');
+    const handleSplitScreenDetected = () => {
+        // Only show warning if we're not already showing it
+        if (!showFullScreenWarning) {
+            setShowFullScreenWarning(false); // make it true for to work exit modal
+            setError('Split-screen or floating window detected. This is not allowed during attendance.');
             
-    //         // Set a timeout to mark the student absent if they don't return to full-screen
-    //         const timeout = setTimeout(() => {
-    //             if (socket && sessionActive) {
-    //                 socket.emit('fullScreenViolation', {
-    //                     department: user.course,
-    //                     semester: selectedSemester,
-    //                     section: user.section,
-    //                     rollNumber: sessionType === 'roll' ? user.classRollNumber : null,
-    //                     gmail: sessionType === 'gmail' ? user.email : null,
-    //                     fingerprint,
-    //                     webRTCIPs,
-    //                     token: localStorage.getItem("token"),
-    //                     device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "pc",
-    //                     violationType: 'split-screen'
-    //                 });
-    //             }
-    //         }, 5000); // 30 seconds
-    //         setFullScreenExitTimeout(timeout);
-    //     }
-    // };
+            // Set a timeout to mark the student absent if they don't return to full-screen
+            const timeout = setTimeout(() => {
+                if (socket && sessionActive) {
+                    socket.emit('fullScreenViolation', {
+                        department: user.course,
+                        semester: selectedSemester,
+                        section: user.section,
+                        rollNumber: sessionType === 'roll' ? user.classRollNumber : null,
+                        gmail: sessionType === 'gmail' ? user.email : null,
+                        fingerprint,
+                        webRTCIPs,
+                        token: localStorage.getItem("token"),
+                        device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "pc",
+                        violationType: 'split-screen'
+                    });
+                }
+            }, 5000); // 30 seconds
+            setFullScreenExitTimeout(timeout);
+        }
+    };
 
     // Function to exit full-screen
     const exitFullScreen = () => {
@@ -552,31 +552,31 @@ const StudentDashboard = () => {
     };
 
     // Function to handle full-screen exit
-    // const handleFullScreenExit = () => {
-    //     // Only show warning if we're not already showing it
-    //     if (!showFullScreenWarning) {
-    //         setShowFullScreenWarning(true);
+    const handleFullScreenExit = () => {
+        // Only show warning if we're not already showing it
+        if (!showFullScreenWarning) {
+            setShowFullScreenWarning(false); // make it true for to work exit modal
             
-    //         // Set a timeout to mark the student absent if they don't return to full-screen
-    //         const timeout = setTimeout(() => {
-    //             if (socket && sessionActive) {
-    //                 socket.emit('fullScreenViolation', {
-    //                     department: user.course,
-    //                     semester: selectedSemester,
-    //                     section: user.section,
-    //                     rollNumber: sessionType === 'roll' ? user.classRollNumber : null,
-    //                     gmail: sessionType === 'gmail' ? user.email : null,
-    //                     fingerprint,
-    //                     webRTCIPs,
-    //                     token: localStorage.getItem("token"),
-    //                     device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "pc",
-    //                     violationType: 'fullscreen-exit'
-    //                 });
-    //             }
-    //         }, 5000); // 5 seconds
-    //         setFullScreenExitTimeout(timeout);
-    //     }
-    // };
+            // Set a timeout to mark the student absent if they don't return to full-screen
+            const timeout = setTimeout(() => {
+                if (socket && sessionActive) {
+                    socket.emit('fullScreenViolation', {
+                        department: user.course,
+                        semester: selectedSemester,
+                        section: user.section,
+                        rollNumber: sessionType === 'roll' ? user.classRollNumber : null,
+                        gmail: sessionType === 'gmail' ? user.email : null,
+                        fingerprint,
+                        webRTCIPs,
+                        token: localStorage.getItem("token"),
+                        device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "pc",
+                        violationType: 'fullscreen-exit'
+                    });
+                }
+            }, 5000); // 5 seconds
+            setFullScreenExitTimeout(timeout);
+        }
+    };
 
     // Function to handle returning to full-screen
     const handleReturnToFullScreen = () => {
