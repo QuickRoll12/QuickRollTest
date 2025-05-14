@@ -201,7 +201,7 @@ const AdminDataUpload = () => {
           className="back-button" 
           onClick={() => navigate('/admin/dashboard')}
         >
-          <i className="fas fa-arrow-left"></i> Back to Dashboard
+          <span className="back-arrow">&larr;</span> Back to Dashboard
         </button>
       </div>
 

@@ -545,7 +545,7 @@ This is an automated email sent by the QuickRoll Attendance System.`;
           className="back-button" 
           onClick={() => navigate('/faculty')}
         >
-          <i className="fas fa-arrow-left"></i> Back to Dashboard
+          <span className="back-arrow">&larr;</span> Back to Dashboard
         </button>
       </div>
 
