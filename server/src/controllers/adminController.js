@@ -269,9 +269,21 @@ exports.uploadStudentData = async (req, res) => {
         }
         
         // Check if email already exists
-        const existingUser = await User.findOne({ email: row.email });
-        if (existingUser) {
+        const existingUserByEmail = await User.findOne({ email: row.email });
+        if (existingUserByEmail) {
           throw new Error(`Email ${row.email} already exists`);
+        }
+        
+        // Check if studentId already exists
+        const existingUserByStudentId = await User.findOne({ studentId: row.studentId });
+        if (existingUserByStudentId) {
+          throw new Error(`Student ID ${row.studentId} already exists`);
+        }
+        
+        // Check if universityRollNumber already exists
+        const existingUserByUniversityRoll = await User.findOne({ universityRollNumber: row.universityRollNumber });
+        if (existingUserByUniversityRoll) {
+          throw new Error(`University Roll Number ${row.universityRollNumber} already exists`);
         }
         
         // Use 'quickroll' as the default password instead of generating a random one
