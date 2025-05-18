@@ -847,7 +847,7 @@ select.form-input option {
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-  animation: slideDown 0.5s ease-out, pulse 2s infinite 0.5s;
+  animation: slideDown 0.5s ease-out;
 }
 
 @keyframes slideDown {
