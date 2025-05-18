@@ -42,7 +42,7 @@ class AttendanceService {
         // Map to store auto-refresh timers for each session
         this.autoRefreshTimers = new Map();
         // Auto-refresh interval in milliseconds (8 seconds)
-        this.autoRefreshInterval = 10 * 1000;
+        this.autoRefreshInterval = 15 * 1000;
     }
 
     generateUniqueCode() {
