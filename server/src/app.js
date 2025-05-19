@@ -267,7 +267,7 @@ io.on('connection', (socket) => {
         // Determine if this is a roll-based or Gmail-based attendance
         const sessionStatus = attendanceService.getSessionStatus(data.department, data.semester, data.section);
         const isGmailSession = sessionStatus.sessionType === 'gmail';
-            
+        
         // Get client IP address - try different socket properties for IP
         let ipAddress = socket.handshake.headers['x-forwarded-for'] || 
                        socket.handshake.headers['x-real-ip'] ||
