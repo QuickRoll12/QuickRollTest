@@ -227,12 +227,20 @@ class AttendanceService {
             if (codeFound) break;
         }
         if (!codeFound) throw new Error('Invalid or already used code');
+
+        const sessionIPs = this.sessionIPs.get(sessionKey) || new Set();
+        if (sessionIPs.has(ip)) {
+            sessionData.grid[row][col].used = false;
+            throw new Error('Attendance already marked from this device.');
+        }
+        
+        this.sessionIPs.set(sessionKey, sessionIPs.add(ip));
     
         // Fetching Proxy & WebRTC data in parallel
         const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
         const [userAttendanceCheck, existingWebRTCSessions, recentProxy] = await Promise.all([
             Proxy.findOne({ userId, department, semester, section, timestamp: { $gte: fifteenMinutesAgo } }),
-            WebRTCSession.find({ webRTCIPs: { $in: webRTCIPs }, timestamp: { $gte: fifteenMinutesAgo }, userId: { $ne: userId } }),
+            // WebRTCSession.find({ webRTCIPs: { $in: webRTCIPs }, timestamp: { $gte: fifteenMinutesAgo }, userId: { $ne: userId } }),
             Proxy.findOne({ fingerprint, timestamp: { $gte: fifteenMinutesAgo } })
         ]);
     
@@ -240,10 +248,10 @@ class AttendanceService {
             sessionData.grid[row][col].used = false;
             throw new Error('This device has already marked the attendance in last 15 minutes.');
         } 
-        if (existingWebRTCSessions.length > 0) {
-            sessionData.grid[row][col].used = false;
-            throw new Error('Multiple attendance attempts detected!');
-        }
+        // if (existingWebRTCSessions.length > 0) {
+        //     sessionData.grid[row][col].used = false;
+        //     throw new Error('Multiple attendance attempts detected!');
+        // }
         if (recentProxy) {
             sessionData.grid[row][col].used = false;
             throw new Error(`Device on cooldown. Please wait before retrying.`);
@@ -288,14 +296,6 @@ class AttendanceService {
             sessionData.grid[row][col].used = false;
             throw new Error(deviceCheckResult.reason);
         }
-    
-        const sessionIPs = this.sessionIPs.get(sessionKey) || new Set();
-        if (sessionIPs.has(ip)) {
-            sessionData.grid[row][col].used = false;
-            throw new Error('Attendance already marked from this device.');
-        }
-        
-        this.sessionIPs.set(sessionKey, sessionIPs.add(ip));
     
         // Determine the identifier to store (rollNumber or gmail)
         const identifier = sessionData.sessionType === 'gmail' ? gmail : rollNumber;

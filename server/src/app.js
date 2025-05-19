@@ -64,18 +64,18 @@ const io = new Server(server, {
 });
 
 // Sample course data (you can replace this with database queries)
-const courses = [
-    { id: 'CSE101', name: 'Introduction to Programming' },
-    { id: 'CSE201', name: 'Data Structures' },
-    { id: 'CSE301', name: 'Database Management' },
-    { id: 'CSE401', name: 'Software Engineering' },
-    // Add your courses here
-    { id: 'ECE101', name: 'Basic Electronics' },
-    { id: 'MECH101', name: 'Engineering Mechanics' },
-    { id: 'CIVIL101', name: 'Structural Engineering' }
-];
+// const courses = [
+//     { id: 'CSE101', name: 'Introduction to Programming' },
+//     { id: 'CSE201', name: 'Data Structures' },
+//     { id: 'CSE301', name: 'Database Management' },
+//     { id: 'CSE401', name: 'Software Engineering' },
+//     // Add your courses here
+//     { id: 'ECE101', name: 'Basic Electronics' },
+//     { id: 'MECH101', name: 'Engineering Mechanics' },
+//     { id: 'CIVIL101', name: 'Structural Engineering' }
+// ];
 
-const sections = ['A', 'B', 'C', 'D', 'E', 'F'];
+// const sections = ['A', 'B', 'C', 'D', 'E', 'F'];
 
 // Middleware
 app.use(morgan('dev'));
@@ -154,15 +154,15 @@ io.use(async (socket, next) => {
 });
 
 io.on('connection', (socket) => {
-    console.log('👤 User connected:', socket.user.name);
+    // console.log('👤 User connected:', socket.user.name);
 
     // Send available courses and sections to client
-    socket.emit('courseData', { courses, sections });
+    // socket.emit('courseData', { courses, sections });
     
     // Handle explicit request for course data
-    socket.on('getCourseData', () => {
-        socket.emit('courseData', { courses, sections });
-    });
+    // socket.on('getCourseData', () => {
+    //     socket.emit('courseData', { courses, sections });
+    // });
 
     socket.on('getSessionStatus', ({ department, semester, section }) => {
         try {
